@@ -31,9 +31,7 @@ Conversation history:
 {chat_history}
 """
 
-    DEFAULT_AUTO_REPLY = (
-        "Thank you. Please keep solving the problem. If you think the problem is solved, please reply me only with 'TERMINATE'."
-    )
+    DEFAULT_AUTO_REPLY = "Thank you. Please keep solving the problem. If you think the problem is solved, please reply me only with 'TERMINATE'."
 
     # Default UserProxyAgent.description values, based on human_input_mode
     DEFAULT_USER_PROXY_AGENT_DESCRIPTIONS = {
@@ -207,7 +205,7 @@ Conversation history:
             code_execution_config=self._code_execution_config,
             max_consecutive_auto_reply=1,
         )
-        task += "\nYou have access to python code interpreter. Suggest python code block starting with '```python' and the code will be automatically executed. You can use code to solve the task or for result verification. You should always use print statement to get the value of a variable."
+        task += "\nYou have access to python code interpreter. Suggest python code block starting with '```python' and the code will be automatically executed. The code will be executed exactly as they are, so do not suggest incomplete code which requires users to modify. You should always use print statement to get the value of a variable."
         user_proxy.initiate_chat(expert, message=expert_identity + "\n" + task, silent=True)
 
         expert_reply = user_proxy.chat_messages[expert][1]["content"]
@@ -215,7 +213,7 @@ Conversation history:
 
         if proxy_reply != "TERMINATE":
             # Code is suggested by the expert
-            code_result = proxy_reply[proxy_reply.find("Code output:") + len("Code output:"):].strip()
+            code_result = proxy_reply[proxy_reply.find("Code output:") + len("Code output:") :].strip()
             expert_reply += f"\nThis is the output of the code blocks when executed:\n{code_result}"
         else:
             expert_reply.replace(
