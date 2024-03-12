@@ -42,9 +42,7 @@ meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config, nested_
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
-    code_execution_config={
-        "use_docker": False,
-    },
+    agent_config_save_path=""
 )
 
 ## Run task

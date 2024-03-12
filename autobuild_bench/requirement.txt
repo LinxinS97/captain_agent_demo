@@ -1,2 +1,3 @@
--e file:///Users/elpis/llm/autogen-autobuild-dev
+-e file:///autogen
 huggingface_hub
+retry

@@ -7,6 +7,7 @@ import requests
 import tarfile
 import json
 import os
+import re
 from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
 URL = "https://people.eecs.berkeley.edu/~hendrycks/MATH.tar"
@@ -109,11 +110,12 @@ Those problems are in the fields of algebra, counting and probability, geometry,
 They need to solve the problem collaboratively and check each other's answer. Also, they can write python code themselves to help solving the task if needed.
 """
 
-    templates = {
-        "two_agents": "Templates/TwoAgents",
-        "autobuild": "Templates/AutoBuild",
-        "meta-agent": "Templates/MetaAgent"
-    }
+    # list all directories in the Templates directory
+    # and populate a dictionary with the name and path
+    templates = {}
+    for entry in os.scandir(TEMPLATES_DIR):
+        if entry.is_dir():
+            templates[re.sub(r"\s", "", entry.name)] = entry.path
 
     default_llm_config = {
         "temperature": 1,

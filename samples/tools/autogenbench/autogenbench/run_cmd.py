@@ -289,6 +289,11 @@ def run_scenario_natively(work_dir, env, timeout=TASK_TIMEOUT):
     os.chdir(work_dir)
     print("\n\n" + os.getcwd() + "\n===================================================================")
 
+    # Add the autogen repo if we can find it
+    autogen_repo_base = os.environ.get("AUTOGENBENCH_REPO_BASE")
+    if autogen_repo_base is None:
+        autogen_repo_base = find_autogen_repo(os.getcwd())
+
     # Prepare the run script
     with open(os.path.join("run.sh"), "wt") as f:
         f.write(
@@ -308,6 +313,8 @@ if [ -f scenario_init.sh ] ; then
 fi
 
 # Run the scenario
+pwd
+pip install -r {str(pathlib.Path(autogen_repo_base).absolute())}/autobuild_bench/requirement.txt
 echo SCENARIO.PY STARTING !#!#
 timeout --preserve-status --kill-after {timeout  + 30}s {timeout}s python scenario.py
 EXIT_CODE=$?
@@ -422,7 +429,7 @@ if [ -f scenario_init.sh ] ; then
 fi
 
 # Run the scenario
-pip install -r requirements.txt
+pip install -r /autogen/autobuild_bench/requirement.txt
 echo SCENARIO.PY STARTING !#!#
 timeout --preserve-status --kill-after {timeout  + 30}s {timeout}s python scenario.py
 EXIT_CODE=$?

@@ -29,7 +29,6 @@ class MetaPromptingScaffolding:
         llm_config: List[Dict[str, Any]],
         generator_settings: Dict[str, Any],
         # verifier_settings: Dict[str, Any],
-        summarizer_settings: Dict[str, Any],
         error_message: str,
         final_answer_indicator: str,
         expert_python_message: str,
@@ -46,7 +45,6 @@ class MetaPromptingScaffolding:
         # Set the generator and verifier parameters + summarizer parameters (optional)
         self.generator_settings = generator_settings
         # self.verifier_settings = verifier_settings
-        self.summarizer_settings = summarizer_settings
 
         # Set the error message and final answer indicator
         self.error_message = error_message

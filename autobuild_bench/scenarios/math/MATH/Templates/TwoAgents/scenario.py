@@ -18,6 +18,13 @@ with open("expected_answer.txt", "rt") as fh:
 config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
 llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
+question = """Please solve the following math problem: 
+{problem}
+Try to approximate by python instead of exact solutions for some problems that may be difficult to calculate. 
+The following python packages are pre-installed: sympy numpy scipy
+Do not plot any figure.
+After verification, reply with the final answer in \\box{{}}."""
+
 assistant = autogen.AssistantAgent(
     "assistant",
     llm_config=llm_config,
@@ -36,7 +43,7 @@ user_proxy = autogen.UserProxyAgent(
     default_auto_reply="TERMINATE",
 )
 
-user_proxy.initiate_chat(assistant, message=PROMPT)
+user_proxy.initiate_chat(assistant, message=question.format(problem=PROMPT))
 
 
 # --------- extract reply ---------

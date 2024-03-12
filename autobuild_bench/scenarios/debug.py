@@ -15,7 +15,7 @@ if __name__ == "__main__":
             entry["tags"].append(entry["model"])
 
     # Filter if requested
-    filter_dict = {"tags": ['gpt-4-1106']}
+    filter_dict = {"tags": ['gpt-4-1106-preview']}
     config_list = filter_config(config_list, filter_dict)
     if len(config_list) == 0:
         sys.exit(

@@ -16,6 +16,7 @@ You can also install official `pyautogen` and `autogenbench` by:
 ```bash
 pip install pyautogen autogenbench
 ```
+Because Meta-agent, Meta-prompting and the latest Autobuild has not been merged to main, so you need to modify the first line in `requirement.txt` to the path of your autogen-autobuild-dev.
 
 ## Usage
 

@@ -41,64 +41,52 @@ or coding may help the following task become easier?
 
 TASK: {task}
 
-Hint:
-# Answer only YES or NO.
+Answer only YES or NO
 """
 
-    AGENT_NAME_PROMPT = """To complete the following task, which roles should be set to maximize efficiency?
+    AGENT_NAME_PROMPT = """To complete the following task, what experts should be invited to maximize the efficiency?
 
 TASK: {task}
 
-Hint:
-# Considering the effort, the role in this task should be no more than {max_agents}; less is better.
-# These roles' name should include enough information that can help a group chat manager know when to let this role speak.
-# The role name should be as specific as possible. For example, use "python_programmer" instead of "programmer".
-# Do not use ambiguous role name, such as "domain expert" with no specific description of domain or "technical writer" with no description of what it should write.
-# Each role should have a unique function and the role name should reflect this.
-# The roles should relate to the task and significantly different in function.
-# Add ONLY ONE programming related role if the task needs coding.
-# Generated agent's name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
-# Answer the names of those roles/jobs, separated names by ",".
-# Only return the list of roles.
+Requirement:
+# Considering the effort, the experts in this task should be no more than {max_agents}; less is better.
+# Experts' name should be specific. For example, use "python_programmer" instead of "programmer".
+# Experts should relate to the task but significantly different in their duty.
+# Generated experts' name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
+# Answer the names of the experts, separated names by ",".
+# Only return the list of experts.
 """
 
-    AGENT_SYS_MSG_PROMPT = """For the following TASK, write a high-quality description for the ROLE by modifying the DEFAULT DESCRIPTION.
-Your response should be in the second person perspective, and you should start from "You are a [ROLE's name]...".
-It is important that you should highlight the python skill because it is useful in most of the tasks.
+    AGENT_SYS_MSG_PROMPT = """For the following TASK, write a high-quality description for the experts by modifying the DEFAULT DESCRIPTION.
+Your response should be in the second person perspective. Ensure that your instructions are clear and unambiguous, and include all necessary information within the triple quotes. You can also assign personas to the experts (e.g., "You are a [persona] specialized in...").
+All experts should equipped with python coding ability. They need coding at a proper time when solving programmatic/math/logic/complex tasks.
+You should highlight in the description that expert should print the result by using "print" function everytime when they provide codes.
 
 [TASK]: {task}
-[ROLE]: {position}
+[EXPERT]: {position}
 [DEFAULT DESCRIPTION]: {default_sys_msg}
 """
 
-    AGENT_DESCRIPTION_PROMPT = """Considering the following role:
+    AGENT_DESCRIPTION_PROMPT = """Summarize the following expert's description in a sentence.
 
-ROLE: {position}
-
-What requirements should this role be satisfied?
-
-# This description should include enough information that can help a group chat manager know when to let this role speak.
-# People with the above role can doubt previous messages or code in the group chat (for example, if there is no
-    output after executing the code) and provide a corrected answer or code.
-# Your answer should be in three sentences.
-# Your answer should be natural and in third person perspective, starting from "[ROLE's name] is a ...".
-# Your answer should include the skills that this role should have.
+EXPERT NAME: {position}
+EXPERT DESCRIPTION: {sys_msg}
 """
 
     AGENT_SEARCHING_PROMPT = """Considering the following task:
 
 TASK: {task}
 
-What following agents should be involved to the task?
+What following experts should be involved to the task?
 
-AGENT LIST:
+EXPERT LIST:
 {agent_list}
 
-Hint:
-# You should consider if the agent's name and profile match the task.
-# Considering the effort, you should select less then {max_agents} agents; less is better.
-# Separate agent names by commas and use "_" instead of space. For example, Product_manager,Programmer
-# Only return the list of agent names.
+Requirement:
+# You should consider if the experts' name and profile match the task.
+# Considering the effort, you should select less then {max_agents} experts; less is better.
+# Separate expert names by commas and use "_" instead of space. For example, Product_manager,Programmer
+# Only return the list of expert names.
 """
 
     def __init__(
@@ -408,14 +396,14 @@ Hint:
 
         print(colored("==> Generating description...", "green"), flush=True)
         agent_description_list = []
-        for name in agent_name_list:
+        for name, sys_msg in list(zip(agent_name_list, agent_sys_msg_list)):
             print(f"Preparing description for {name}", flush=True)
             resp_agent_description = (
                 build_manager.create(
                     messages=[
                         {
                             "role": "user",
-                            "content": self.AGENT_DESCRIPTION_PROMPT.format(position=name),
+                            "content": self.AGENT_DESCRIPTION_PROMPT.format(position=name, sys_msg=sys_msg),
                         }
                     ]
                 )

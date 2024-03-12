@@ -111,6 +111,8 @@ class MetaPromptAgent(ConversableAgent):
             client=self.client,
             llm_config=llm_config,
             generator_settings=self.generator_settings,
+            # ?
+            # summarizer_settings=
             error_message=self.error_message,
             final_answer_indicator=self.final_answer_indicator,
             expert_python_message=self.expert_python_message,
