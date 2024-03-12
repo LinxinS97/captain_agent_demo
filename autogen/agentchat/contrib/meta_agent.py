@@ -87,7 +87,7 @@ It is important to note that within a single response, you are limited to initia
 Upon the completion of all tasks and verifications, you should conclude the operation and reply "TERMINATE".
 """
 
-    META_PROMPTING_SYSTEM_MESSAGE = '''You are Meta-Expert, an extremely clever expert with the unique ability to collaborate with multiple experts (such as Expert Problem Solver, Expert Mathematician, Expert Essayist, etc.) to tackle any task and solve any complex problems. Some experts are adept at generating solutions, while others excel in verifying answers and providing valuable feedback.
+    META_PROMPTING_SYSTEM_MESSAGE = """You are Meta-Expert, an extremely clever expert with the unique ability to collaborate with multiple experts (such as Expert Problem Solver, Expert Mathematician, Expert Essayist, etc.) to tackle any task and solve any complex problems. Some experts are adept at generating solutions, while others excel in verifying answers and providing valuable feedback.
 
 As Meta-Expert, your role is to oversee the communication between the experts, effectively using their skills to answer a given question while applying your own critical thinking and verification abilities.
 
@@ -101,13 +101,8 @@ If you or an expert finds a mistake in another expert's solution, ask a new expe
 
 Refrain from repeating the very same questions to experts. Examine their responses carefully and seek clarification if required, keeping in mind they don't recall past interactions.
 
-Present the final answer as follows:
->> FINAL ANSWER:
+Upon the completion of all tasks and verifications, you should conclude the operation and reply "TERMINATE" in the end.
 """
-[final answer]
-"""
-Upon the completion of all tasks and verifications, you should conclude the operation and reply "TERMINATE".
-'''
 
     DEFAULT_DESCRIPTION = "A helpful AI assistant that can build a group of agents at a proper time to solve a task."
 
