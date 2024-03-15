@@ -12,7 +12,7 @@ with open("table.txt",'rt') as fh:
 PROMPT = "Please solve the following problem with tabular data:\n"
 with open("prompt.txt", "rt") as fh:
     PROMPT += fh.read()
-PROMPT += """Table: """
+PROMPT += """\nTable:\n"""
 PROMPT += TABLE
 PROMPT += """\nPlease determine the type of question and answer accordingly.
 After verification, reply with the final answer in \\box{{}}."""

@@ -45,7 +45,7 @@ Conversation history:
         self,
         name: str,
         nested_mode_config: Dict,
-        agent_config_save_path: str = "./",
+        agent_config_save_path: str = None,
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
         human_input_mode: Optional[str] = "NEVER",

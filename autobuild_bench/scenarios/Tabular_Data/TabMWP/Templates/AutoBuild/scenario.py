@@ -32,10 +32,10 @@ default_llm_config = {
 }
 
 ## build agents
-config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4-1106-preview"]})
+config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4-1106"]})
 builder = AgentBuilder(config_file_or_env=config,
-                       builder_model='gpt-4-1106-preview',
-                       agent_model='gpt-4-1106-preview',
+                       builder_model='gpt-4-1106',
+                       agent_model='gpt-4-1106',
                        max_agents=max_agents)
 agent_list, _ = builder.load(config_json=AGENT_CONFIGS)
 
@@ -45,10 +45,12 @@ manager = autogen.GroupChatManager(
     groupchat=group_chat, code_execution_config={'use_docker': False}, llm_config={"config_list": config_list, **default_llm_config}
 )
 question = """Please answer the following problem with tabular data: 
-{problem} Table:{table}
+{problem}
+Table:
+{table}
 Please determine the type of question and answer accordingly.
 After verification, reply with the final answer in \\box{{}}."""
-agent_list[0].initiate_chat(manager, message=question.format(problem=PROBLEM,table=TABLE))
+agent_list[0].initiate_chat(manager, message=question.format(problem=PROBLEM, table=TABLE))
 
 ## collect response
 messages = []

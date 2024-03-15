@@ -42,7 +42,8 @@ meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config, nested_
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
-    agent_config_save_path=""
+    code_execution_config={},
+    agent_config_save_path="/Users/elpis/llm/autogen-autobuild-dev/autobuild_bench/scenarios/math/MATH/Saved_agents"
 )
 
 ## Run task

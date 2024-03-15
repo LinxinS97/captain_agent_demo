@@ -22,9 +22,11 @@ config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
 llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
 question = """Please answer the following problem with tabular data: 
-{problem} Table:{table}
+{problem} 
+Table:
+{table}
 Please determine the type of question and answer accordingly.
-After verification, reply with the final answer in \\box{{}}."""
+Reply with the final answer in \\box{{}}."""
 
 assistant = autogen.AssistantAgent(
     "assistant",

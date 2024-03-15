@@ -20,6 +20,7 @@ SCENARIO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
 TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
 TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 DOWNLOADS_DIR = os.path.join(SCENARIO_DIR, "Downloads")
+SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 SELECTED_PROBLEMS = [
     "MATH/test/algebra/2144.json",
@@ -129,6 +130,7 @@ They need to solve the problem collaboratively and check each other's answer. Al
                            agent_model='gpt-4-1106',
                            max_agents=10)
     _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
+    builder.save(f"{SAVE_DIR}/autobuild.json")
 
     for t in templates.items():
         create_jsonl(f"math_{t[0]}", problems, t[1], agent_list=agent_configs)

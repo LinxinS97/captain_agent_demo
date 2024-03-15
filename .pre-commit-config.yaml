@@ -31,6 +31,19 @@ repos:
     hooks:
       - id: ruff
         args: ["--fix"]
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+        args: ["-L", "ans,linar,nam,tread,ot,"]
+        exclude: |
+            (?x)^(
+              pyproject.toml |
+              website/static/img/ag.svg |
+              website/yarn.lock |
+              website/docs/tutorial/code-executors.ipynb |
+              notebook/.*
+            )$
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.7.1
     hooks:

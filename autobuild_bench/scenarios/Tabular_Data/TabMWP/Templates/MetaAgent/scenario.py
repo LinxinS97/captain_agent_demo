@@ -21,13 +21,13 @@ with open("expected_answer.txt", "rt") as fh:
 # Task parameters
 general_llm_config = {
     "temperature": 0,
-    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106-preview"]}),
+    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106"]}),
 }
 nested_mode_config = {
     "autobuild_init_config": {
         "config_file_or_env": "OAI_CONFIG_LIST",
-        "builder_model": "gpt-4-1106-preview",
-        "agent_model": "gpt-4-1106-preview",
+        "builder_model": "gpt-4-1106",
+        "agent_model": "gpt-4-1106",
     },
     "autobuild_build_config": {
         "default_llm_config": {
@@ -48,11 +48,14 @@ meta_user_proxy = MetaUserProxyAgent(
     code_execution_config={
         "use_docker": False,
     },
+    agent_config_save_path="../../../Saved_agents"
 )
 
 ## Run task
 question = """Please answer the following problem with tabular data: 
-{problem} Table: {table}
+{problem}
+Table:
+{table}
 Please determine the type of question and answer accordingly.
 After verification, reply with the final answer in \\box{{}}."""
 

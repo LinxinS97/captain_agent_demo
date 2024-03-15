@@ -9,7 +9,6 @@ import json
 import os
 from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
-URL = "https://people.eecs.berkeley.edu/~hendrycks/MATH.tar"
 
 SCRIPT_PATH = os.path.realpath(__file__)
 SCRIPT_NAME = os.path.basename(SCRIPT_PATH)
@@ -21,7 +20,6 @@ TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 DOWNLOADS_DIR = os.path.join(SCENARIO_DIR, "Downloads")
 
 SELECTED_PROBLEMS = [
-    "MATH/test/algebra/2144.json",
 ]
 
 

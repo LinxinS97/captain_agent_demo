@@ -18,44 +18,29 @@ SCENARIO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
 TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
 TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 DOWNLOADS_DIR = os.path.join(SCENARIO_DIR, "Downloads")
+SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
-with open('F:/tabmwp/problems_dev.json', 'r') as file:
+with open('../Downloads/problems_dev_sample.json', 'r') as file:
     DATA = json.load(file)
 
-SELECTED_PROBLEMS = ['2',
-                     '10']
+SELECTED_PROBLEMS = [
+    '19',
+    '589',
+    '617',
+    '33',
+    '139',
+    '150',
+    '10',
+    '35',
+    '37',
+    '2',
+    '3',
+    '11',
+    '9',
+    '18',
+    '50'
+]
 
-
-# def download_math():
-#     """Download the MATH dataset (if not already downloaded).
-#     Return a JSON dictionary of selected problems."""
-#
-#     selected_problems = dict()
-#
-#     if not os.path.isdir(DOWNLOADS_DIR):
-#         os.mkdir(DOWNLOADS_DIR)
-#
-#     tar_file = os.path.join(DOWNLOADS_DIR, "MATH.tar")
-#
-#     if not os.path.isfile(tar_file):
-#         # Send a HTTP request to the URL
-#         response = requests.get(URL, stream=True)
-#         response.raise_for_status()
-#
-#         # If the HTTP request returns a status code 200, proceed
-#         with open(tar_file, "wb") as fh:
-#             for chunk in response.iter_content(chunk_size=512):
-#                 fh.write(chunk)
-#
-#     # Extract selected problems
-#     tar = tarfile.open(tar_file)
-#     for member in tar.getmembers():
-#         if member.name in SELECTED_PROBLEMS:
-#             print(f"Extracting: {member.name}")
-#             content = tar.extractfile(member).read()
-#             selected_problems[member.name] = json.loads(content)
-#
-#     return selected_problems
 
 def create_jsonl(name, problems, template, agent_list=None):
     """Creates a JSONL scenario file with a given name, dictionary of MATH problems, and template path."""
@@ -74,14 +59,14 @@ def create_jsonl(name, problems, template, agent_list=None):
             if data["choices"] is None:
                 prompt_tmp = data["question"]
             else:
-                prompt_tmp = data["question"] + 'CHOICES:' + str(data["choices"])
+                prompt_tmp = data["question"] + '\nCHOICES:' + str(data["choices"])
             record = {
                 "id": task_id,
                 "template": os.path.join(os.path.pardir, template),
                 "substitutions": {
                     "prompt.txt": {"__PROMPT__": prompt_tmp},
                     "expected_answer.txt": {"__ANSWER__": data["answer"]},
-                    "table.txt": {"__TABLE__": (str(data['table_title']) + data["table"])},
+                    "table.txt": {"__TABLE__": f"Table Title: {data['table_title']}\nTable Content:\n{data['table']}"},
                     "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
                 },
             }
@@ -123,11 +108,12 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     ## build agents
     builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
-                           builder_model='gpt-4-1106-preview',
-                           agent_model='gpt-4-1106-preview',
+                           builder_model='gpt-4-1106',
+                           agent_model='gpt-4-1106',
                            max_agents=10)
     _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
-
+    builder.save(f"{SAVE_DIR}/autobuild.json")
+    
     for t in templates.items():
         create_jsonl(f"question_{t[0]}", problems, t[1], agent_list=agent_configs)
 
