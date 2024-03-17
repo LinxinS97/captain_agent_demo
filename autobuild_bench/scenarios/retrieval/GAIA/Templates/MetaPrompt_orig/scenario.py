@@ -1,12 +1,10 @@
-import os
-import json
 import autogen
+from autogen.agentchat.contrib.meta_prompting_orig import MetaPromptAgent
+import re
 from datetime import datetime
 import testbed_utils
 
 testbed_utils.init()
-##############################
-
 
 GAIA_SYSTEM_MESSAGE = (
     "You are a helpful AI assistant, and today's date is "
@@ -27,24 +25,30 @@ If you are asked for a comma separated list, apply the above rules depending of 
     """.strip()
 )
 
-config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
+ANSWER = ""
+with open("expected_answer.txt", "rt") as fh:
+    ANSWER = fh.read()
 
-assistant = autogen.AssistantAgent(
-    "assistant",
-    system_message=GAIA_SYSTEM_MESSAGE,
-    is_termination_msg=lambda x: x.get("content", "").rstrip().find("FINAL ANSWER") >= 0,
-    llm_config=testbed_utils.default_llm_config(config_list, timeout=180),
-)
+####################
+config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
+llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
+
 user_proxy = autogen.UserProxyAgent(
     "user_proxy",
     human_input_mode="NEVER",
-    is_termination_msg=lambda x: x.get("content", "").rstrip().find("FINAL ANSWER") >= 0,
+    is_termination_msg=lambda x: x.get("content", "").find("FINAL ANSWER") >= 0,
     code_execution_config={
         "work_dir": "coding",
         "use_docker": False,
     },
-    max_consecutive_auto_reply=10,
-    default_auto_reply="",
+    max_consecutive_auto_reply=0,
+    default_auto_reply="TERMINATE",
+)
+
+meta_prompt_agent = MetaPromptAgent(
+    name="Metaprompt Agent",
+    llm_config=llm_config,
+    is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
 )
 
 filename = "__FILE_NAME__".strip()
@@ -55,8 +59,52 @@ __PROMPT__
 if len(filename) > 0:
     question = f"Consider the file '{filename}', which can be read from the current working directory. If you need to read or write it, output python code in a code block (```python) to do so. {question}"
 
-user_proxy.initiate_chat(assistant, message=question)
+user_proxy.initiate_chat(meta_prompt_agent, message=question)
 
+# --------- extract reply ---------
+response_with_ans = ""
+messages = meta_prompt_agent._oai_messages[user_proxy][-1]["content"]
+pattern = "FINAL ANSWER:(.*)"
+reply = re.findall(pattern, messages, re.DOTALL)
+if len(reply) > 0:
+    response_with_ans = reply[0].strip()
 
-##############################
-testbed_utils.finalize(agents=[assistant, user_proxy])
+# --------- call LLM to check the answer ---------
+check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to verify the answer.
+You are given:
+    1. A problem.
+    2. A reply with the answer to the problem.
+    3. A ground truth answer.
+Please do the following:
+1. Extract the answer in the reply: "The answer is <answer extracted>".
+2. Check whether the answer in the reply matches the ground truth answer. When comparison is not obvious (for example, 3*\\sqrt(6) and 7.348), you may write code to check the answer and wait for the user to execute the code.
+3. After everything is done, please choose a reply from the following options:
+    - "The answer is correct."
+    - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
+    - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
+    - "The reply doesn't contain an answer." """
+
+answer_checker = autogen.AssistantAgent(name="checker", llm_config=llm_config, system_message=check_sys_msg)
+checker_proxy = autogen.UserProxyAgent(
+    "checker_proxy",
+    human_input_mode="NEVER",
+    code_execution_config={
+        "work_dir": "coding",
+        "use_docker": False,
+    },
+    max_consecutive_auto_reply=5,
+    default_auto_reply="TERMINATE",
+    is_termination_msg=lambda x: x.get("content", "").lower()
+    and (
+        "the answer is correct" in x.get("content", "").lower()
+        or "the answer is incorrect" in x.get("content", "").lower()
+        or "the reply doesn't contain an answer" in x.get("content", "").lower()
+        or "the answer is approximated but should be correct" in x.get("content", "").lower()
+    ),
+)
+
+message_to_check = "Problem: " + question + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
+checker_proxy.initiate_chat(answer_checker, message=message_to_check)
+
+####################
+testbed_utils.finalize(agents=[meta_prompt_agent, user_proxy, answer_checker, checker_proxy])

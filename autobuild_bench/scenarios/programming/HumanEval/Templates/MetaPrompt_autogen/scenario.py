@@ -1,8 +1,9 @@
 import os
 import json
 import base64
-import autogen
 import testbed_utils
+import autogen
+from autogen.agentchat.contrib.meta_prompting_agent_autogen import MetaPromptAgent
 
 # NOTE:
 # This scenario runs Human Eval in a slightly unconventional way:
@@ -19,51 +20,30 @@ PROMPT = ""
 with open("prompt.txt", "rt") as fh:
     PROMPT = fh.read()
 
-# Ok, now get autogen to solve it.
+##############################
 config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
-
-assistant = autogen.AssistantAgent(
-    "coder",
-    is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
-    llm_config=testbed_utils.default_llm_config(config_list, timeout=180),
-)
+llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
 user_proxy = autogen.UserProxyAgent(
     "user_proxy",
     human_input_mode="NEVER",
-    system_message="A human who can run code at a terminal and report back the results.",
-    is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
+    is_termination_msg=lambda x: x.get("content", "").find("FINAL ANSWER") >= 0,
     code_execution_config={
         "work_dir": work_dir,
         "use_docker": False,
-        "last_n_messages": "auto",
     },
-    max_consecutive_auto_reply=10,
+    max_consecutive_auto_reply=0,
+    default_auto_reply="TERMINATE",
 )
 
-distractor_agent = autogen.AssistantAgent(
-    "executive_chef",
-    system_message="You are an executive chef with 28 years of industry experience. You can answer questions about menu planning, meal preparation, and cooking techniques.",
+meta_prompt_agent = MetaPromptAgent(
+    name="Metaprompt Agent",
+    llm_config=llm_config,
     is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
-    llm_config=testbed_utils.default_llm_config(config_list, timeout=180),
-)
-
-groupchat = autogen.GroupChat(
-    agents=[user_proxy, assistant, distractor_agent],
-    messages=[],
-    speaker_selection_method="__SELECTION_METHOD__",
-    allow_repeat_speaker=False,
-    max_round=12,
-)
-
-manager = autogen.GroupChatManager(
-    groupchat=groupchat,
-    is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
-    llm_config=testbed_utils.default_llm_config(config_list, timeout=180),
 )
 
 user_proxy.initiate_chat(
-    manager,
+    meta_prompt_agent,
     message="""
 The following python code imports the `run_tests(candidate)` function from my_tests.py, and runs
 it on the function `__ENTRY_POINT__`. This will run a set of automated unit tests to verify the
@@ -87,4 +67,4 @@ run_tests(__ENTRY_POINT__)
 )
 
 ##############################
-testbed_utils.finalize(agents=[assistant, user_proxy, distractor_agent, manager])
+testbed_utils.finalize(agents=[meta_prompt_agent, user_proxy])

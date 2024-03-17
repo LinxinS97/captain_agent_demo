@@ -7,6 +7,7 @@ import json
 import os
 import sys
 from huggingface_hub import snapshot_download
+from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
 SCRIPT_PATH = os.path.realpath(__file__)
 SCRIPT_NAME = os.path.basename(SCRIPT_PATH)
@@ -17,6 +18,7 @@ TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
 TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 DOWNLOADS_DIR = os.path.join(SCENARIO_DIR, "Downloads")
 REPO_DIR = os.path.join(DOWNLOADS_DIR, "GAIA")
+SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 
 def download_gaia():
@@ -34,7 +36,7 @@ def download_gaia():
     )
 
 
-def create_jsonl(name, tasks, files_dir, template):
+def create_jsonl(name, tasks, files_dir, template, agent_list = None):
     """Creates a JSONL scenario file with a given name, and template path."""
 
     if not os.path.isdir(TASKS_DIR):
@@ -44,7 +46,6 @@ def create_jsonl(name, tasks, files_dir, template):
         for task in tasks:
             print(f"Converting: [{name}] {task['task_id']}")
 
-            # Figure out what files we need to copy
             template_cp_list = [template]
             if len(task["file_name"].strip()) > 0:
                 template_cp_list.append(
@@ -63,6 +64,7 @@ def create_jsonl(name, tasks, files_dir, template):
                         "__PROMPT__": task["Question"],
                     },
                     "expected_answer.txt": {"__EXPECTED_ANSWER__": task["Final answer"]},
+                    "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)}
                 },
             }
 
@@ -72,6 +74,16 @@ def create_jsonl(name, tasks, files_dir, template):
 ###############################################################################
 def main():
     download_gaia()
+    building_task = """We need a group of experts to solve a series of complex, real-world problems. 
+These tasks involve reasoning, handling multi-modal data, browsing the web, and using tools proficiently.
+They need to solve the problem collaboratively and check each other's answer. Also, they can write python code themselves to help solving the task if needed.
+"""
+
+    default_llm_config = {
+        "temperature": 1,
+        "top_p": 0.95,
+        "max_tokens": 1024,
+    }
 
     gaia_validation_files = os.path.join(REPO_DIR, "2023", "validation")
     gaia_test_files = os.path.join(REPO_DIR, "2023", "test")
@@ -98,8 +110,12 @@ def main():
             gaia_test_tasks[data["Level"] - 1].append(data)
 
     templates = {
-        "two_agents": os.path.join(TEMPLATES_DIR, "BasicTwoAgents"),
-        "soc": os.path.join(TEMPLATES_DIR, "SocietyOfMind"),
+        "single_llm": os.path.join(TEMPLATES_DIR, "SingleLLM"),
+        "two_agents": os.path.join(TEMPLATES_DIR, "TwoAgents"),
+        "meta_prompt_orig": os.path.join(TEMPLATES_DIR, "MetaPrompt_orig"),
+        "meta_prompt_autogen": os.path.join(TEMPLATES_DIR, "MetaPrompt_autogen"),
+        "autobuild": os.path.join(TEMPLATES_DIR, "AutoBuild"),
+        "meta_agent": os.path.join(TEMPLATES_DIR, "MetaAgent")
     }
 
     # Add coding directories if needed (these are usually empty and left out of the repo)
@@ -107,6 +123,15 @@ def main():
         code_dir_path = os.path.join(template, "coding")
         if not os.path.isdir(code_dir_path):
             os.mkdir(code_dir_path)
+    
+    # build agents
+    builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
+                           builder_model='gpt-4', # you can modify the model
+                           agent_model='gpt-4',
+                           max_agents=10)
+    
+    _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
+    builder.save(f"{SAVE_DIR}/autobuild.json")
 
     # Create the various combinations of [models] x [templates]
     for t in templates.items():
@@ -115,36 +140,42 @@ def main():
             gaia_validation_tasks[0],
             gaia_validation_files,
             t[1],
+            agent_list=agent_configs
         )
         create_jsonl(
             f"gaia_validation_level_2__{t[0]}",
             gaia_validation_tasks[1],
             gaia_validation_files,
             t[1],
+            agent_list=agent_configs
         )
         create_jsonl(
             f"gaia_validation_level_3__{t[0]}",
             gaia_validation_tasks[2],
             gaia_validation_files,
             t[1],
+            agent_list=agent_configs
         )
         create_jsonl(
             f"gaia_test_level_1__{t[0]}",
             gaia_test_tasks[0],
             gaia_test_files,
             t[1],
+            agent_list=agent_configs
         )
         create_jsonl(
             f"gaia_test_level_2__{t[0]}",
             gaia_test_tasks[1],
             gaia_test_files,
             t[1],
+            agent_list=agent_configs
         )
         create_jsonl(
             f"gaia_test_level_3__{t[0]}",
             gaia_test_tasks[2],
             gaia_test_files,
             t[1],
+            agent_list=agent_configs
         )
 
 

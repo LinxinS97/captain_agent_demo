@@ -9,12 +9,16 @@ import io
 import json
 import os
 import base64
+from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
 URL = "https://github.com/openai/human-eval/raw/master/data/HumanEval.jsonl.gz"
 
 SCRIPT_PATH = os.path.realpath(__file__)
 SCRIPT_NAME = os.path.basename(SCRIPT_PATH)
 SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
+
+SCENARIO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
+SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 # A selected subset of HumanEval problems to work with during development
 REDUCED_SET = [
@@ -69,7 +73,7 @@ def download_human_eval():
     return results
 
 
-def create_jsonl(name, tasks, template):
+def create_jsonl(name, tasks, template, agent_list = None):
     """Creates a JSONL scenario file with a given name, list of HumanEval tasks, and template path."""
 
     # Create a task directory if it doesn't exist
@@ -93,6 +97,7 @@ def create_jsonl(name, tasks, template):
                     },
                     "prompt.txt": {"__PROMPT__": task["prompt"]},
                     "coding/my_tests.py": {"__TEST__": task["test"]},
+                    "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)}
                 },
             }
 
@@ -104,17 +109,37 @@ def main():
     human_eval = download_human_eval()
     reduced_human_eval = [t for t in human_eval if t["task_id"] in REDUCED_SET]
 
+    building_task = """We need a group of programming experts to tackle a variety of complex tasks. 
+These tasks involve understanding function signatures, docstrings, and bodies, and passing several unit tests.
+They need to solve the problem collaboratively and check each other's answer. Also, they can write python code themselves to help solving the task if needed.
+"""
+
+    default_llm_config = {
+        "temperature": 1,
+        "top_p": 0.95,
+        "max_tokens": 1024,
+    }
+
     templates = {
         "two_agents": "Templates/TwoAgents",
-        # "gc3_distractor": "Templates/GroupChatThreeAgents_Distractor",
-        # "gc3_guardrails": "Templates/GroupChatThreeAgents_Guardrails",
-        # "gc4": "Templates/GroupChatFourAgents",
+        "meta_prompt_orig": "Templates/MetaPrompt_orig",
+        "meta_prompt_autogen": "Templates/MetaPrompt_autogen",
+        "autobuild": "Templates/AutoBuild",
+        "meta_agent": "Templates/MetaAgent"
     }
+
+    # build agents
+    builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
+                           builder_model='gpt-4', # you can modify the model
+                           agent_model='gpt-4',
+                           max_agents=10)
+    _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
+    builder.save(f"{SAVE_DIR}/autobuild.json")
 
     # Create the various combinations of [models] x [templates]
     for t in templates.items():
-        create_jsonl(f"human_eval_{t[0]}", human_eval, t[1])
-        create_jsonl(f"r_human_eval_{t[0]}", reduced_human_eval, t[1])
+        create_jsonl(f"human_eval_{t[0]}", human_eval, t[1], agent_list=agent_configs)
+        create_jsonl(f"r_human_eval_{t[0]}", reduced_human_eval, t[1], agent_list=agent_configs)
 
 
 if __name__ == "__main__" and __package__ is None:

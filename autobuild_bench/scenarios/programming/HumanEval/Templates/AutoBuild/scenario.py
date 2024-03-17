@@ -3,6 +3,7 @@ import json
 import base64
 import testbed_utils
 import autogen
+from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
 # NOTE:
 # This scenario runs Human Eval in a slightly unconventional way:
@@ -19,30 +20,35 @@ PROMPT = ""
 with open("prompt.txt", "rt") as fh:
     PROMPT = fh.read()
 
-###############################
-config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
+AGENT_CONFIGS = ""
+with open("agent_list.txt", "rt") as fh:
+    AGENT_CONFIGS = fh.read()
 
-assistant = autogen.AssistantAgent(
-    "assistant",
-    is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
-    llm_config=testbed_utils.default_llm_config(config_list, timeout=180),
+####################
+# Task parameters
+max_agents = 10
+config = 'OAI_CONFIG_LIST'
+default_llm_config = {
+    "temperature": 1,
+    "top_p": 0.95,
+    "max_tokens": 1024,
+}
+
+## build agents
+config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4"]})
+builder = AgentBuilder(config_file_or_env=config,
+                       builder_model='gpt-4',
+                       agent_model='gpt-4',
+                       max_agents=max_agents)
+agent_list, _ = builder.load(config_json=AGENT_CONFIGS)
+
+## Run task
+group_chat = autogen.GroupChat(agents=agent_list, messages=[], max_round=20)
+manager = autogen.GroupChatManager(
+    groupchat=group_chat, code_execution_config={'use_docker': False}, llm_config={"config_list": config_list, **default_llm_config}
 )
 
-user_proxy = autogen.UserProxyAgent(
-    "user_proxy",
-    human_input_mode="NEVER",
-    is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
-    code_execution_config={
-        "work_dir": work_dir,
-        "use_docker": False,
-    },
-    max_consecutive_auto_reply=10,
-    default_auto_reply="TERMINATE",
-)
-
-user_proxy.initiate_chat(
-    assistant,
-    message="""
+agent_list[0].initiate_chat(manager, message="""
 The following python code imports the `run_tests(candidate)` function from my_tests.py, and runs
 it on the function `__ENTRY_POINT__`. This will run a set of automated unit tests to verify the
 correct implementation of `__ENTRY_POINT__`. However, `__ENTRY_POINT__` is only partially
@@ -61,8 +67,7 @@ from my_tests import run_tests
 # Run the unit tests
 run_tests(__ENTRY_POINT__)
 ```
-""",
-)
+""")
 
 ##############################
-testbed_utils.finalize(agents=[assistant, user_proxy])
+testbed_utils.finalize(agents=agent_list)
