@@ -130,8 +130,8 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     # build agents
     builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
-                           builder_model='gpt-4', # you can modify the model
-                           agent_model='gpt-4',
+                           builder_model='gpt-4-1106-preview', # you can modify the model
+                           agent_model='gpt-4-1106-preview',
                            max_agents=10)
     _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
     builder.save(f"{SAVE_DIR}/autobuild.json")
