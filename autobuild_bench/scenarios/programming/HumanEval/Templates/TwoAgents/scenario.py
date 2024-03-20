@@ -42,27 +42,20 @@ user_proxy = autogen.UserProxyAgent(
 
 user_proxy.initiate_chat(
     assistant,
-    message="""
-The following python code imports the `run_tests(candidate)` function from my_tests.py, and runs
-it on the function `__ENTRY_POINT__`. This will run a set of automated unit tests to verify the
-correct implementation of `__ENTRY_POINT__`. However, `__ENTRY_POINT__` is only partially
-implemented in the code below. Complete the implementation of `__ENTRY_POINT__` and output
-a new stand-alone code block that contains everything needed to run the tests, including: importing
-`my_tests`, calling `run_tests(__ENTRY_POINT__)`, as well as __ENTRY_POINT__'s complete definition,
-such that this code block can be run directly in Python.
+    message=f"""The following python code imports the `run_tests(candidate)` function from my_tests.py, and runs it on the function `__ENTRY_POINT__`. This will run a set of automated unit tests to verify the correct implementation of `__ENTRY_POINT__`. 
+However, `__ENTRY_POINT__` is only partially implemented in the code below. 
+Complete the implementation of `__ENTRY_POINT__` and output a new stand-alone code block that contains everything needed to run the tests, including: importing `my_tests`, calling `run_tests(__ENTRY_POINT__)`, as well as __ENTRY_POINT__'s complete definition, such that this code block can be run directly in Python.
 
 ```python
 from my_tests import run_tests
 
-"""
-    + PROMPT
-    + """
+{PROMPT}
 
 # Run the unit tests
 run_tests(__ENTRY_POINT__)
 ```
-""",
-)
+
+The pass code should let `run_tests` function return "all test passed".""")
 
 ##############################
 testbed_utils.finalize(agents=[assistant, user_proxy])

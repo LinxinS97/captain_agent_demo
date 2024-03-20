@@ -15,7 +15,7 @@ with open("expected_answer.txt", "rt") as fh:
 
 
 ####################
-# Task parameters
+## Task parameters
 general_llm_config = {
     "temperature": 0,
     "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106"]}),
@@ -25,20 +25,23 @@ nested_mode_config = {
         "config_file_or_env": "OAI_CONFIG_LIST",
         "builder_model": "gpt-4-1106",
         "agent_model": "gpt-4-1106",
+        "max_agents": 5,
     },
     "autobuild_build_config": {
         "default_llm_config": {
             "temperature": 1,
             "top_p": 0.95,
             "max_tokens": 1500,
+            "cache_seed": None
         },
         "coding": True
     },
     "group_chat_config": {"max_round": 15},
     "group_chat_llm_config": general_llm_config.copy(),
 }
+
 ## build agents
-meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config, nested_mode="autobuild")
+meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config.copy(), nested_mode="autobuild")
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
