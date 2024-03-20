@@ -61,24 +61,30 @@ def create_jsonl(name, problems, template, agent_list = None):
         os.mkdir(TASKS_DIR)
 
     # Create the jsonl file
+    cnt = 0
     with open(os.path.join(TASKS_DIR, name + ".jsonl"), "wt") as fh:
         for item in problems.items():
             data = item[1]
 
-            task_id = item[0].replace("MATH/", "").replace(".json", "").replace("/", "_")
-            print(f"Converting: [{item[0]}] {task_id}")
+            id_prefix = item[0].split('/')[-1].replace('.json', '')
+            for quest in data:
+                task_id = id_prefix + quest['problemid']
+                print(f"Converting: {task_id}")
 
-            record = {
-                "id": task_id,
-                "template": os.path.join(os.path.pardir, template),
-                "substitutions": {
-                    "prompt.txt": {"__PROMPT__": data["problem"]},
-                    "expected_answer.txt": {"__ANSWER__": data["solution"]},
-                    "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
-                },
-            }
+                record = {
+                    "id": task_id,
+                    "template": os.path.join(os.path.pardir, template),
+                    "substitutions": {
+                        "prompt.txt": {"__PROMPT__": quest["problem_text"]},
+                        "expected_answer.txt": {"__ANSWER__": quest["answer_number"]},
+                        "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
+                    },
+                }
 
-            fh.write(json.dumps(record).strip() + "\n")
+                fh.write(json.dumps(record).strip() + "\n")
+                cnt += 1
+                if cnt >= 20:
+                    return
 
 
 ###############################################################################
@@ -86,7 +92,7 @@ def main():
     problems = load_data()
 
     building_task = """We need a group of experts to solve some scientific problems.
-Those problems are in the fields of Chemistry.
+Those problems are in the fields of "Quantum Chemistry", "Physical Chemistry" and "Physical Chemistry, Quanta, Matter, and Change".
 They need to solve the problem collaboratively and check each other's answer. Also, they can write python code themselves to help solving the task if needed.
 """
 
@@ -103,17 +109,20 @@ They need to solve the problem collaboratively and check each other's answer. Al
         "max_tokens": 1024,
     }
 
-    ## build agents
-    builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
-                           builder_model='gpt-4-1106',
-                           agent_model='gpt-4-1106',
-                           max_agents=10)
-    _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
+    # build agents
+    if os.path.exists(f"{SAVE_DIR}/autobuild.json"):
+        agent_configs = json.load(open(f"{SAVE_DIR}/autobuild.json"))
+    else:
+        builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
+                            builder_model='gpt-4-1106',
+                            agent_model='gpt-4-1106',
+                            max_agents=10)
+        _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
 
-    if not os.path.isdir(SAVE_DIR):
-        os.mkdir(SAVE_DIR)
+        if not os.path.isdir(SAVE_DIR):
+            os.mkdir(SAVE_DIR)
 
-    builder.save(f"{SAVE_DIR}/autobuild.json")
+        builder.save(f"{SAVE_DIR}/autobuild.json")
 
     for t in templates.items():
         create_jsonl(f"sci_chem_{t[0]}", problems, t[1], agent_list=agent_configs)
