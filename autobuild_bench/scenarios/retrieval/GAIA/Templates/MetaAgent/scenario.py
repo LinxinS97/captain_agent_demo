@@ -34,14 +34,14 @@ with open("expected_answer.txt", "rt") as fh:
 # Task parameters
 general_llm_config = {
     "temperature": 0,
-    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4"]}),
+    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106-preview"]}),
 }
 
 nested_mode_config = {
     "autobuild_init_config": {
         "config_file_or_env": "OAI_CONFIG_LIST",
-        "builder_model": "gpt-4",
-        "agent_model": "gpt-4",
+        "builder_model": "gpt-4-1106-preview",
+        "agent_model": "gpt-4-1106-preview",
     },
     "autobuild_build_config": {
         "default_llm_config": {
@@ -76,7 +76,7 @@ if len(filename) > 0:
 
 meta_user_proxy.initiate_chat(
     meta_agent,
-    message=question
+    message=f"{GAIA_SYSTEM_MESSAGE}\n{question}"
 )
 
 ## collect response

@@ -44,10 +44,10 @@ default_llm_config = {
 }
 
 ## build agents
-config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4"]})
+config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4-1106-preview"]})
 builder = AgentBuilder(config_file_or_env=config,
-                       builder_model='gpt-4',
-                       agent_model='gpt-4',
+                       builder_model='gpt-4-1106-preview',
+                       agent_model='gpt-4-1106-preview',
                        max_agents=max_agents)
 agent_list, _ = builder.load(config_json=AGENT_CONFIGS)
 
@@ -66,7 +66,7 @@ if len(filename) > 0:
     question = f"Consider the file '{filename}', which can be read from the current working directory. If you need to read or write it, output python code in a code block (```python) to do so. {question}"
 
 
-agent_list[0].initiate_chat(manager, message=question)
+agent_list[0].initiate_chat(manager, message=f"{GAIA_SYSTEM_MESSAGE}\n{question}")
 
 ## collect response
 messages = []
