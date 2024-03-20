@@ -31,15 +31,6 @@ SELECTED_CHEM_PROBLEMS = [
     "../scibench/dataset/original/matter_sol.json",
 ]
 
-SELECTED_PHY_PROBLEMS = [
-    "../scibench/dataset/original/fund.json", # 83
-    "../scibench/dataset/original/fund_sol.json",
-    "../scibench/dataset/original/thermo.json", # 84
-    "../scibench/dataset/original/thermo_sol.json",
-    "../scibench/dataset/original/class.json", # 54
-    "../scibench/dataset/original/class_sol.json",
-]
-
 
 def load_data():
     """Load SCI Chemistry data.
