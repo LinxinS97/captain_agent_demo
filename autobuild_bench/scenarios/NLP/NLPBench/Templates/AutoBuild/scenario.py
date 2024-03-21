@@ -8,14 +8,9 @@ PROBLEM = ""
 with open("prompt.txt", "rt") as fh:
     PROBLEM = fh.read()
 
-README = ""
-with open("readme.txt", "rt") as fh:
-    README = fh.read()
-
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
-    ANSWER = json.loads(ANSWER)
 
 AGENT_CONFIGS = ""
 with open("agent_list.txt", "rt") as fh:
@@ -45,21 +40,13 @@ group_chat = autogen.GroupChat(agents=agent_list, messages=[], max_round=20)
 manager = autogen.GroupChatManager(
     groupchat=group_chat, code_execution_config={'use_docker': False}, llm_config={"config_list": config_list, **default_llm_config}
 )
-question = """Please solve the following machine learning development problem given by a user: 
+question = """Please solve the following math problem: 
 {problem}
-
-You can refer to the following README:
-{readme}
-
-You need to consider the README carefully and write a python bash script to fulfill the user's need, taking care of the arguments in the script to match the user's instruction.
-In this task, you cannot run the python bash script or python code and testing them will have no feedbacks but only errors.
-Your final answer should be a single line python bash script in the following format:
-
->>> python YOUR ANSWER
-
-Do not suggest any code or scripts in ```...``` format. This will causes errors.
-"""
-agent_list[0].initiate_chat(manager, message=question.format(problem=PROBLEM, readme=README))
+Try to approximate by python instead of exact solutions for some problems that may be difficult to calculate. 
+The following python packages are pre-installed: sympy numpy scipy
+Do not plot any figure.
+After verification, reply with the final answer in \\box{{}}."""
+agent_list[0].initiate_chat(manager, message=question.format(problem=PROBLEM))
 
 ## collect response
 messages = []
@@ -71,23 +58,25 @@ messages.reverse()
 
 response_with_ans = "No answer."
 for msg in messages:
-    if msg["content"] != "TERMINATE" and msg["content"] != "TERMINATE.":
+    if (
+        msg["content"] != "TERMINATE"
+        and msg["content"] != "TERMINATE."
+        and msg['role'] != 'assistant'
+    ):
         response_with_ans = msg["content"]
         break
 
 # ---------between "answer_checker" and "checker_proxy"---------
 # define answer checker chat
 
-check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to compare the reply and answer.
+check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to verify the answer.
 You are given:
-    1. A user instruction.
-    2. A reply with the python bash script to the problem.
-    3. Ground truth arguments for the script.
+    1. A problem.
+    2. A reply with the answer to the problem.
+    3. A ground truth answer.
 Please do the following:
-1. Extract the python bash script in the reply: "The extracted python bash script is <answer extracted>".
-2. Check whether the python bash script in the reply matches the ground truth python bash script. 
-    - You need to carefully compare the arguments in the reply and answer. 
-    - Additional arguments in the reply is allowed. But the arguments exist in the ground truth should be the same as in the reply.
+1. Extract the answer in the reply: "The answer is <answer extracted>".
+2. Check whether the answer in the reply matches the ground truth answer. When comparison is not obvious (for example, 3*\\sqrt(6) and 7.348), you may write code to check the answer and wait for the user to execute the code.
 3. After everything is done, please choose a reply from the following options:
     - "The answer is correct."
     - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
@@ -117,10 +106,9 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-answer = f"{' '.join([f'--{key} {value}' for key, value in ANSWER.items()])}"
-message_to_check = "[Problem]: " + PROBLEM + f"\n[Reply]: {response_with_ans}\n\n[Ground truth arguments]: " + answer
+message_to_check = "[Problem]: " + PROBLEM + f"\n[Reply]: {response_with_ans}\n\n[Ground truth answer]: " + ANSWER
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 
 ####################
-testbed_utils.finalize(agents=[answer_checker, checker_proxy, manager])
+testbed_utils.finalize(agents=agent_list + [answer_checker, checker_proxy])

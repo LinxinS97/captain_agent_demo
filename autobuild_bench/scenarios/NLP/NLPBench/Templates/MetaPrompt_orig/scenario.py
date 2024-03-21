@@ -1,38 +1,21 @@
 import autogen
 from autogen.agentchat.contrib.meta_prompting_orig import MetaPromptAgent
 import re
-import json
 import testbed_utils
 
 testbed_utils.init()
 
-PROMPT = ""
+PROMPT = "Please solve the following math problem:\n"
 with open("prompt.txt", "rt") as fh:
-    PROMPT = fh.read()
-
-README = ""
-with open("readme.txt", "rt") as fh:
-    README = fh.read()
+    PROMPT += fh.read()
+PROMPT += """\nTry to approximate by python instead of exact solutions for some problems that may be difficult to calculate.
+The following python packages are pre-installed: sympy numpy scipy
+Do not plot any figure.
+"""
 
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
-    ANSWER = json.loads(ANSWER)
-
-question = f"""
-Please solve the following machine learning development problem given by a user: 
-{PROMPT}
-
-You can refer to the following README:
-{README}
-
-You need to consider the README carefully and write a python bash script to fulfill the user's need, taking care of the arguments in the script to match the user's instruction.
-In this task, you cannot run the python bash script or python code and testing them will have no feedbacks but only errors.
-Your final answer should be a single line python bash script in the following format:
-
->>> python YOUR ANSWER
-
-Do not suggest any code or scripts in ```...``` format. This will causes errors."""
 
 ####################
 config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
@@ -56,7 +39,7 @@ meta_prompt_agent = MetaPromptAgent(
     is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
 )
 
-user_proxy.initiate_chat(meta_prompt_agent, message=question)
+user_proxy.initiate_chat(meta_prompt_agent, message=PROMPT)
 
 # --------- extract reply ---------
 response_with_ans = ""
@@ -67,22 +50,19 @@ if len(reply) > 0:
     response_with_ans = reply[0].strip()
 
 # --------- call LLM to check the answer ---------
-check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to compare the reply and answer.
+check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to verify the answer.
 You are given:
-    1. A user instruction.
-    2. A reply with the python bash script to the problem.
-    3. Ground truth arguments for the script.
+    1. A problem.
+    2. A reply with the answer to the problem.
+    3. A ground truth answer.
 Please do the following:
-1. Extract the python bash script in the reply: "The extracted python bash script is <answer extracted>".
-2. Check whether the python bash script in the reply matches the ground truth python bash script. 
-    - You need to carefully compare the arguments in the reply and answer. 
-    - Additional arguments in the reply is allowed. But the arguments exist in the ground truth should be the same as in the reply.
+1. Extract the answer in the reply: "The answer is <answer extracted>".
+2. Check whether the answer in the reply matches the ground truth answer. When comparison is not obvious (for example, 3*\\sqrt(6) and 7.348), you may write code to check the answer and wait for the user to execute the code.
 3. After everything is done, please choose a reply from the following options:
     - "The answer is correct."
     - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
-    - "The reply doesn't contain an answer." 
-"""
+    - "The reply doesn't contain an answer." """
 
 answer_checker = autogen.AssistantAgent(name="checker", llm_config=llm_config, system_message=check_sys_msg)
 checker_proxy = autogen.UserProxyAgent(
@@ -103,8 +83,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-answer = f"{' '.join([f'--{key} {value}' for key, value in ANSWER.items()])}"
-message_to_check = "[Problem]: " + PROMPT + f"\n[Reply]: {response_with_ans}\n\n[Ground truth arguments]: " + answer
+message_to_check = "Problem: " + PROMPT + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 ####################
