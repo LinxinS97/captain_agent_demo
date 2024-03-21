@@ -2,6 +2,7 @@ import os
 import random
 import json
 import re
+from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
 SCRIPT_PATH = os.path.realpath(__file__)
 SCRIPT_NAME = os.path.basename(SCRIPT_PATH)
@@ -41,7 +42,7 @@ def load_data():
     return joined_data
 
 
-def create_jsonl(name, problems, template):
+def create_jsonl(name, problems, template, agent_list=None):
     if not os.path.isdir(TASKS_DIR):
         os.mkdir(TASKS_DIR)
 
@@ -61,6 +62,7 @@ def create_jsonl(name, problems, template):
                     "expected_answer.txt": {"__ANSWER__": answer},
                     "format.txt": {"__FORMAT__": problem["format"]},
                     "question.txt": {"__QUESTION__": problem["question"]},
+                    "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
                 },
             }
 
@@ -77,13 +79,38 @@ def main():
     # sort problems based on the 'id' field
     problems = sorted(problems, key=lambda x: x["id"])
 
+    # build agents
+    building_task = """We need a group of experts to solve some scientific problems.
+Those problems are in the fields of "Quantum Chemistry", "Physical Chemistry" and "Physical Chemistry, Quanta, Matter, and Change".
+They need to solve the problem collaboratively and check each other's answer. Also, they can write python code themselves to help solving the task if needed.
+"""
+
+    default_llm_config = {
+        "temperature": 1,
+        "top_p": 0.95,
+        "max_tokens": 1024,
+    }
+    if os.path.exists(f"{SAVE_DIR}/autobuild.json"):
+        agent_configs = json.load(open(f"{SAVE_DIR}/autobuild.json"))
+    else:
+        builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
+                            builder_model='gpt-4-1106',
+                            agent_model='gpt-4-1106',
+                            max_agents=10)
+        _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
+
+        if not os.path.isdir(SAVE_DIR):
+            os.mkdir(SAVE_DIR)
+
+        builder.save(f"{SAVE_DIR}/autobuild.json")
+
     templates = {}
     for entry in os.scandir(TEMPLATES_DIR):
         if entry.is_dir():
             templates[re.sub(r"\s", "", entry.name)] = entry.path
 
     for t in templates.items():
-        create_jsonl(f"da_{t[0]}", problems, t[1])
+        create_jsonl(f"da_{t[0]}", problems, t[1], agent_configs)
 
 
 if __name__ == "__main__":
