@@ -35,7 +35,6 @@ llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
 assistant = autogen.AssistantAgent(
     "assistant",
-    system_message=GAIA_SYSTEM_MESSAGE,
     is_termination_msg=lambda x: x.get("content", "").rstrip().find("FINAL ANSWER") >= 0,
     llm_config=testbed_utils.default_llm_config(config_list, timeout=180),
 )
@@ -60,7 +59,7 @@ __PROMPT__
 if len(filename) > 0:
     question = f"Consider the file '{filename}', which can be read from the current working directory. If you need to read or write it, output python code in a code block (```python) to do so. {question}"
 
-user_proxy.initiate_chat(assistant, message=question)
+user_proxy.initiate_chat(assistant, message=f"{GAIA_SYSTEM_MESSAGE}\n{question}")
 
 
 # --------- extract reply ---------

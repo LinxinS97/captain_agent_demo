@@ -34,59 +34,115 @@ class AgentBuilder:
 
     online_server_name = "online"
 
-    DEFAULT_PROXY_AUTO_REPLY = "There is no code for me to execute. Let other participants to continue the conversation."
+    DEFAULT_SYSTEM_MESSAGE = """
+# Your role
+A helpful AI assistant.
+
+# Task and skill instructions
+Solve tasks using your coding and language skills.
+
+## When to use code?
+- When you need to collect info, use the code to output the info you need, for example, browse or search the web, download/read a file, print the content of a webpage or a file, get the current date/time, check the operating system. After sufficient info is printed and the task is ready to be solved based on your language skill, you can solve the task by yourself.
+- When you need to perform some task with code, use the code to perform the task and output the result. Finish the task smartly.
+
+## How to use code?
+- Suggest python code (in a python coding block) or shell script (in a sh coding block) for the Computer_terminal to execute.
+- When using code, you must indicate the script type in the code block.
+- Do not suggest incomplete code which requires users to modify.
+- Do not use a code block if it's not intended to be executed by the Computer_terminal.
+- The Computer_terminal cannot provide any other feedback or perform any other action beyond executing the code you suggest. 
+- The Computer_terminal can't modify your code.
+- Use 'print' function for the output when relevant. 
+- Check the execution result returned by the user.
+- Do not ask users to copy and paste the result.
+
+## How to save your code?
+- If you want the Computer_terminal to save the code in a file before executing it, put # filename: <filename> inside the code block as the first line. 
+
+# How to solve a task?
+- Solve the task step by step if you need to. 
+- If a plan is not provided, explain your plan first. 
+- Be clear which step uses code, and which step uses your language skill.
+- If the result indicates there is an error, fix the error and output the code again. 
+- If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
+- When you find an answer, verify the answer carefully. 
+- Include verifiable evidence in your response if possible."""
+
+    DEFAULT_PROXY_AUTO_REPLY = 'There is no code for me to execute. Let other participants to continue the conversation. If you want to end the conversation, you should reply me only with "TERMINATE"'
 
     CODING_PROMPT = """Does the following task need programming (i.e., access external API or tool by coding) to solve,
 or coding may help the following task become easier?
 
 TASK: {task}
 
-Answer only YES or NO
+Answer only YES or NO.
 """
 
-    AGENT_NAME_PROMPT = """To complete the following task, what experts should be invited to maximize the efficiency?
+    AGENT_NAME_PROMPT = """
+# Your goal
+To complete the following task, what experts should be invited to maximize the efficiency?
 
-TASK: {task}
+# TASK
+{task}
 
-Requirement:
-# Considering the effort, the experts in this task should be no more than {max_agents}; less is better.
-# Experts' name should be specific. For example, use "python_programmer" instead of "programmer".
-# Experts should relate to the task but significantly different in their duty.
-# Generated experts' name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
-# Answer the names of the experts, separated names by ",".
-# Only return the list of experts.
+# Requirement
+- Considering the effort, the experts in this task should be no more than {max_agents}; less is better.
+- Experts' name should be specific. For example, use "python_programmer" instead of "programmer".
+- Experts should relate to the task but significantly different in their duty.
+- Generated experts' name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
+- Answer the names of the experts, separated names by ",".
+- Only return the list of experts.
 """
 
-    AGENT_SYS_MSG_PROMPT = """For the following TASK, write a high-quality description for the experts by modifying the DEFAULT DESCRIPTION.
-Your response should be in the second person perspective. Ensure that your instructions are clear and unambiguous, and include all necessary information within the triple quotes. You can also assign personas to the experts (e.g., "You are a [persona] specialized in...").
-All experts should equipped with python coding ability. They need coding at a proper time when solving programmatic/math/logic/complex tasks.
-You should highlight in the description that expert should print the result by using "print" function everytime when they provide codes.
+    AGENT_SYS_MSG_PROMPT = """
+# Your goal
+- For the following TASK, write a high-quality description for the experts by modifying the DEFAULT DESCRIPTION.
+- Your response should be in the second person perspective. 
+- Ensure that your instructions are clear and unambiguous, and include all necessary information within the triple quotes. 
+- All experts should equipped with python coding skill. They need coding at a proper time when solving programmatic/math/logic/complex tasks.
+- You should highlight in the description that expert should print the result by using "print" function everytime when they provide codes.
+- You should let the expert to shorten their response length as possible as they can to prevent redundancy outputs.
 
-[TASK]: {task}
-[EXPERT]: {position}
-[DEFAULT DESCRIPTION]: {default_sys_msg}
+# Task
+{task}
+
+# EXPERT NAME
+{position}
+
+# DEFAULT DESCRIPTION (filled in [[...]])
+[[
+{default_sys_msg}
+]]
 """
 
-    AGENT_DESCRIPTION_PROMPT = """Summarize the following expert's description in a sentence.
+    AGENT_DESCRIPTION_PROMPT = """
+# Your goal
+Summarize the following expert's description in a sentence.
 
-EXPERT NAME: {position}
-EXPERT DESCRIPTION: {sys_msg}
+# EXPERT NAME
+{position}
+
+# EXPERT DESCRIPTION (filled in [[...]])
+[[
+{sys_msg}
+]]
 """
 
-    AGENT_SEARCHING_PROMPT = """Considering the following task:
+    AGENT_SEARCHING_PROMPT = """
+# Your goal
+Considering the following task, what experts should be involved to the task?
 
-TASK: {task}
+# TASK
+{task}
 
-What following experts should be involved to the task?
-
-EXPERT LIST:
+# EXPERT LIST
 {agent_list}
 
-Requirement:
-# You should consider if the experts' name and profile match the task.
-# Considering the effort, you should select less then {max_agents} experts; less is better.
-# Separate expert names by commas and use "_" instead of space. For example, Product_manager,Programmer
-# Only return the list of expert names.
+# Requirement
+- You should consider if the experts' name and profile match the task.
+- Considering the effort, you should select less then {max_agents} experts; less is better.
+- Separate expert names by commas and use "_" instead of space. For example, Product_manager,Programmer
+- Only return the list of expert names.
 """
 
     def __init__(
@@ -152,7 +208,7 @@ Requirement:
         agent_name: str,
         model_name_or_hf_repo: str,
         llm_config: dict,
-        system_message: Optional[str] = autogen.AssistantAgent.DEFAULT_SYSTEM_MESSAGE,
+        system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,
         description: Optional[str] = autogen.AssistantAgent.DEFAULT_DESCRIPTION,
         use_oai_assistant: Optional[bool] = False,
         world_size: Optional[int] = 1,
@@ -384,7 +440,7 @@ Requirement:
                             "content": self.AGENT_SYS_MSG_PROMPT.format(
                                 task=building_task,
                                 position=name,
-                                default_sys_msg=autogen.AssistantAgent.DEFAULT_SYSTEM_MESSAGE,
+                                default_sys_msg=self.DEFAULT_SYSTEM_MESSAGE,
                             ),
                         }
                     ]
@@ -416,7 +472,7 @@ Requirement:
             enhanced_sys_msg = """You are now working in a group chat with different expert and a group chat manager.
             Here is the members' name: {members}
             The group chat manager will select the speaker who can speak at the current time, but if there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
-            Reply only "TERMINATE" in the end when everything is done.
+            When the task is complete and the result has been carefully verified, after agreement of the other members, you can end the conversation by replying only with "TERMINATE".
             Here is your profile: """
             enhanced_sys_msg = enhanced_sys_msg.format(members=agent_name_list)
             enhanced_sys_msg += sys_msg
@@ -583,7 +639,7 @@ Requirement:
                             "content": self.AGENT_SYS_MSG_PROMPT.format(
                                 task=building_task,
                                 position=f"{name}\nPOSITION PROFILE: {profile}",
-                                default_sys_msg=autogen.AssistantAgent.DEFAULT_SYSTEM_MESSAGE,
+                                default_sys_msg=self.DEFAULT_SYSTEM_MESSAGE,
                             ),
                         }
                     ]
@@ -609,9 +665,10 @@ Requirement:
 
         for name, sys_msg, description in list(zip(agent_name_list, agent_sys_msg_list, agent_profile_list)):
             enhanced_sys_msg = """You are now working in a group chat with different expert and a group chat manager.
+            The group chat manager cannot speak, but will select the speaker who can speak at the current time.
             Here is the members' name: {members}{user_proxy_desc}
-            Reply "TERMINATE" in the end when everything is done.
-            The group chat manager will select the speaker who can speak at the current time, but if there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
+            If there is someone you want to talk to, you can use @mention with "I would like to hear the opinion from ...".
+            Reply only with "TERMINATE" to end the conversation when everything is done.
             Here is your profile: """
             enhanced_sys_msg = enhanced_sys_msg.format(members=agent_name_list, user_proxy_desc=user_proxy_desc)
             enhanced_sys_msg += sys_msg
@@ -674,7 +731,7 @@ Requirement:
             if user_proxy is None:
                 user_proxy = autogen.UserProxyAgent(
                     name="Computer_terminal",
-                    is_termination_msg=lambda x: "TERMINATE" in x.get("content"),
+                    is_termination_msg=lambda x: x == "TERMINATE" or x == "TERMINATE.",
                     code_execution_config=code_execution_config,
                     human_input_mode="NEVER",
                     default_auto_reply=self.DEFAULT_PROXY_AUTO_REPLY,

@@ -25,8 +25,9 @@ class MetaUserProxyAgent(ConversableAgent):
     """(In preview) A proxy agent for the meta agent, that can execute code and provide feedback to the other agents."""
 
     SUMMARY_PROMPT = """
-Briefly summarize the conversation history derive from a group chat.
-You should highlight the reasoning process and the conclusion they made.
+Briefly summarize the conversation history derive from a experts' group chat.
+You should highlight the reasoning process and output exactly the same result at the final.
+If experts in conversation suggest some code finally, you should additionally output the code block without any modification.
 
 Conversation history:
 {chat_history}

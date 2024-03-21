@@ -28,6 +28,7 @@ nested_mode_config = {
         "config_file_or_env": "OAI_CONFIG_LIST",
         "builder_model": "gpt-4-1106",
         "agent_model": "gpt-4-1106",
+        "max_agents": 3,
     },
     "autobuild_build_config": {
         "default_llm_config": {
@@ -48,15 +49,17 @@ meta_user_proxy = MetaUserProxyAgent(
     code_execution_config={
         "use_docker": False,
     },
-    agent_config_save_path="../../../Saved_agents"
+    agent_config_save_path="/Users/elpis/llm/autogen-autobuild-dev/autobuild_bench/scenarios/Tabular_Data/TabMWP/Saved_agents"
 )
 
 ## Run task
-question = """Please answer the following problem with tabular data: 
+question = """Please answer the following problem: 
 {problem}
+
+There is also some necessary information in the following table (you should provide the following table to the expert):
 Table:
 {table}
-Please determine the type of question and answer accordingly.
+
 After verification, reply with the final answer in \\box{{}}."""
 
 meta_user_proxy.initiate_chat(
