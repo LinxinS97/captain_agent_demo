@@ -5,13 +5,13 @@ import testbed_utils
 
 testbed_utils.init()
 
-PROMPT = "Please solve the following chemistry problem:\n"
+PROBLEM = ""
 with open("prompt.txt", "rt") as fh:
-    PROMPT += fh.read()
-PROMPT += """\nTry to approximate by python instead of exact solutions for some problems that may be difficult to calculate.
-The following python packages are pre-installed: sympy numpy scipy
-Do not plot any figure.
-"""
+    PROBLEM = fh.read()
+
+UNIT = ""
+with open("unit.txt", "rt") as fh:
+    UNIT = fh.read()
 
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
@@ -39,7 +39,15 @@ meta_prompt_agent = MetaPromptAgent(
     is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
 )
 
-user_proxy.initiate_chat(meta_prompt_agent, message=PROMPT)
+question = """Please solve the following chemistry problem: 
+{problem}
+Try to approximate by python instead of exact solutions for some problems that may be difficult to calculate. 
+The following python packages are pre-installed: sympy numpy scipy
+Do not plot any figure.
+The required unit of the answer is {unit}.
+After verification, reply with the final answer in \\box{{}}."""
+
+user_proxy.initiate_chat(meta_prompt_agent, message=question.format(problem=PROBLEM, unit=UNIT))
 
 # --------- extract reply ---------
 response_with_ans = ""
@@ -83,7 +91,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "Problem: " + PROMPT + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
+message_to_check = "Problem: " + PROBLEM + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 ####################

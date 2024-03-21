@@ -9,6 +9,10 @@ PROBLEM = ""
 with open("prompt.txt", "rt") as fh:
     PROBLEM = fh.read()
 
+UNIT = ""
+with open("unit.txt", "rt") as fh:
+    UNIT = fh.read()
+
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
@@ -43,7 +47,7 @@ meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
     code_execution_config={},
-    agent_config_save_path="Chemistry/Saved_agents"
+    agent_config_save_path="/home/kattolab/luo/home/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Chemistry/Saved_agents"
 )
 
 ## Run task
@@ -52,10 +56,11 @@ question = """Please solve the following chemistry problem:
 Try to approximate by python instead of exact solutions for some problems that may be difficult to calculate. 
 The following python packages are pre-installed: sympy numpy scipy
 Do not plot or let the expert plot any figure.
+The required unit of the answer is {unit}.
 After verification, reply with the final answer in \\box{{}}."""
 meta_user_proxy.initiate_chat(
     meta_agent,
-    message=question.format(problem=PROBLEM)
+    message=question.format(problem=PROBLEM, unit=UNIT)
 )
 
 ## collect response

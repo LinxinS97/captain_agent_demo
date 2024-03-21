@@ -67,6 +67,7 @@ def create_jsonl(name, problems, template, agent_list = None):
                     "substitutions": {
                         "prompt.txt": {"__PROMPT__": quest["problem_text"]},
                         "expected_answer.txt": {"__ANSWER__": quest["answer_number"]},
+                        "unit.txt": {"__UNIT__": quest['unit']},
                         "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
                     },
                 }

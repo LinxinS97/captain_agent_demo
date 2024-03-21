@@ -5,9 +5,13 @@ import testbed_utils
 
 testbed_utils.init()
 
-PROMPT = ""
+PROBLEM = ""
 with open("prompt.txt", "rt") as fh:
-    PROMPT = fh.read()
+    PROBLEM = fh.read()
+
+UNIT = ""
+with open("unit.txt", "rt") as fh:
+    UNIT = fh.read()
 
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
@@ -22,6 +26,7 @@ question = """Please solve the following chemistry problem:
 {problem}
 Try to approximate by python instead of exact solutions for some problems that may be difficult to calculate. 
 Do not plot any figure.
+The required unit of the answer is {unit}.
 Reply with the final answer in \\box{{}}."""
 
 build_manager = autogen.OpenAIWrapper(config_list=config_list)
@@ -29,7 +34,7 @@ response_with_ans = build_manager.create(
     messages=[
         {
             "role": "user",
-            "content": question.format(problem=PROMPT),
+            "content": question.format(problem=PROBLEM, unit=UNIT),
         }
     ]
 ).choices[0].message.content
@@ -70,7 +75,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "Problem: " + PROMPT + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
+message_to_check = "Problem: " + PROBLEM + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 

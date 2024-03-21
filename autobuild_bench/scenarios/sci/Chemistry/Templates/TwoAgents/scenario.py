@@ -5,9 +5,13 @@ import testbed_utils
 
 testbed_utils.init()
 
-PROMPT = ""
+PROBLEM = ""
 with open("prompt.txt", "rt") as fh:
-    PROMPT = fh.read()
+    PROBLEM = fh.read()
+
+UNIT = ""
+with open("unit.txt", "rt") as fh:
+    UNIT = fh.read()
 
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
@@ -23,6 +27,7 @@ question = """Please solve the following chemistry problem:
 Try to approximate by python instead of exact solutions for some problems that may be difficult to calculate. 
 The following python packages are pre-installed: sympy numpy scipy
 Do not plot any figure.
+The required unit of the answer is {unit}.
 After verification, reply with the final answer in \\box{{}}."""
 
 assistant = autogen.AssistantAgent(
@@ -43,7 +48,7 @@ user_proxy = autogen.UserProxyAgent(
     default_auto_reply="TERMINATE",
 )
 
-user_proxy.initiate_chat(assistant, message=question.format(problem=PROMPT))
+user_proxy.initiate_chat(assistant, message=question.format(problem=PROBLEM, unit=UNIT))
 
 
 # --------- extract reply ---------
@@ -95,7 +100,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "Problem: " + PROMPT + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
+message_to_check = "Problem: " + PROBLEM + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 
