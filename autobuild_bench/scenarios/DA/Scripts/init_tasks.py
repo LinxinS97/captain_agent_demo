@@ -1,6 +1,7 @@
 import os
 import random
 import json
+import re
 
 SCRIPT_PATH = os.path.realpath(__file__)
 SCRIPT_NAME = os.path.basename(SCRIPT_PATH)
@@ -10,6 +11,7 @@ SCENARIO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
 TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
 TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 DATA_DIR = os.path.join(SCENARIO_DIR, "data")
+SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 
 def load_data():
@@ -75,11 +77,10 @@ def main():
     # sort problems based on the 'id' field
     problems = sorted(problems, key=lambda x: x["id"])
 
-    templates = {
-        "two_agent": "Templates/TwoAgents",
-        "meta_prompt": "Templates/MetaPrompt",
-        "autobuild": "Templates/AutoBuild",
-    }
+    templates = {}
+    for entry in os.scandir(TEMPLATES_DIR):
+        if entry.is_dir():
+            templates[re.sub(r"\s", "", entry.name)] = entry.path
 
     for t in templates.items():
         create_jsonl(f"da_{t[0]}", problems, t[1])
