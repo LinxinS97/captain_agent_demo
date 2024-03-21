@@ -8,6 +8,10 @@ PROBLEM = ""
 with open("prompt.txt", "rt") as fh:
     PROBLEM = fh.read()
 
+UNIT = ""
+with open("unit.txt", "rt") as fh:
+    UNIT = fh.read()
+
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
@@ -45,8 +49,9 @@ question = """Please solve the following physics problem:
 Try to approximate by python instead of exact solutions for some problems that may be difficult to calculate. 
 The following python packages are pre-installed: sympy numpy scipy
 Do not plot any figure.
+The required unit of the answer is {unit}.
 After verification, reply with the final answer in \\box{{}}."""
-agent_list[0].initiate_chat(manager, message=question.format(problem=PROBLEM))
+agent_list[0].initiate_chat(manager, message=question.format(problem=PROBLEM, unit=UNIT))
 
 ## collect response
 messages = []
