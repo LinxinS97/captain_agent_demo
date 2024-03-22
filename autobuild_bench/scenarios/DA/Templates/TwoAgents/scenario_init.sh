@@ -1,1 +1,1 @@
-pip install sympy matplotlib numpy
+pip install sympy matplotlib numpy pandas

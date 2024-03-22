@@ -13,17 +13,13 @@ FORMATS = ""
 with open("format.txt", "rt") as fh:
     FORMATS = fh.read()
 
-FILE = ""
-with open("file.txt", "rt") as fh:
-    FILE = fh.read()
-
 QUESTION = ""
 with open("question.txt", "rt") as fh:
     QUESTION = fh.read()
 
 PROMPT = """Let's solve a data analysis problem. Given an absolute csv file path, you are required to answer a question following a constraint. When you have reached a final answer, conclude your response and end it with 'TERMINATE'.
 
-FILE PATH: {file}
+FILE PATH: ../data.csv
 QUESTION: {question}
 CONSTRAINT: {constraint}
 After verification, reply with the final answer as the format of {formats}.
@@ -55,7 +51,7 @@ user_proxy = autogen.UserProxyAgent(
     default_auto_reply="TERMINATE",
 )
 
-user_proxy.initiate_chat(assistant, message=PROMPT.format(file=FILE, question=QUESTION, constraint=CONSTRAINT, formats=FORMATS))
+user_proxy.initiate_chat(assistant, message=PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS))
 
 
 # --------- extract reply ---------

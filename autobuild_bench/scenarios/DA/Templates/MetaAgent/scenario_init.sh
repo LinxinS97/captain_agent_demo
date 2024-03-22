@@ -1,1 +1,1 @@
-pip install sympy numpy scipy
+pip install sympy numpy scipy pandas

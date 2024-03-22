@@ -1,1 +1,1 @@
-pip install sympy matplotlib numpy retry
+pip install sympy matplotlib numpy retry pandas
