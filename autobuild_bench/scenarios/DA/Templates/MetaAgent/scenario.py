@@ -125,7 +125,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "[Problem]: " + QUESTION + f"\n[Reply]: {response_with_ans}\n\n[Ground truth answer]: " + ANSWER
+message_to_check = "[Problem]: " + QUESTION + f"\n[Reply]: {response_with_ans}\n\n[Ground truth answer]: " + ANSWER + "\n\nFormats:" + FORMATS
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 
