@@ -58,7 +58,7 @@ def create_jsonl(name, problems, template, agent_list=None):
                 "template": os.path.join(os.path.pardir, template),
                 "substitutions": {
                     "constraint.txt": {"__CONSTRAINT__": problem["constraints"]},
-                    "file.txt": {"__FILE__": "../files/" + problem["file_name"]},
+                    "data.csv": {"__CSV__": open("data/da-dev-tables/" + problem["file_name"]).read()},
                     "expected_answer.txt": {"__ANSWER__": answer},
                     "format.txt": {"__FORMAT__": problem["format"]},
                     "question.txt": {"__QUESTION__": problem["question"]},
@@ -80,8 +80,8 @@ def main():
     problems = sorted(problems, key=lambda x: x["id"])
 
     # build agents
-    building_task = """We need a group of experts to solve some scientific problems.
-Those problems are in the fields of "Quantum Chemistry", "Physical Chemistry" and "Physical Chemistry, Quanta, Matter, and Change".
+    building_task = """We need a group of experts to solve a data analysis problem.
+Given an absolute csv file path, you are required to answer a question following a constraint.
 They need to solve the problem collaboratively and check each other's answer. Also, they can write python code themselves to help solving the task if needed.
 """
 
