@@ -38,7 +38,7 @@ response_with_ans = build_manager.create(
     messages=[
         {
             "role": "user",
-            "content": PROMPT.format(problem=PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS)),
+            "content": PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS),
         }
     ]
 ).choices[0].message.content
