@@ -19,7 +19,7 @@ with open("question.txt", "rt") as fh:
 
 PROMPT = """Let's solve a data analysis problem. Given an absolute csv file path, you are required to answer a question following a constraint. When you have reached a final answer, conclude your response and end it with 'TERMINATE'.
 
-FILE PATH: ../data.csv
+FILE PATH: data.csv
 QUESTION: {question}
 CONSTRAINT: {constraint}
 After verification, reply with the final answer as the format of {formats}.
@@ -30,42 +30,18 @@ with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
 
 ####################
-config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
+config_list = autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106"]})
 llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
-assistant = autogen.AssistantAgent(
-    "assistant",
-    llm_config=llm_config,
-    is_termination_msg=lambda x: x.get("content", "").find("STOP") >= 0,
-)
-
-user_proxy = autogen.UserProxyAgent(
-    "user_proxy",
-    human_input_mode="NEVER",
-    is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
-    code_execution_config={
-        "work_dir": "coding",
-        "use_docker": False,
-    },
-    max_consecutive_auto_reply=10,
-    default_auto_reply="STOP",
-)
-
-user_proxy.initiate_chat(assistant, message=PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS))
-
-
-# --------- extract reply ---------
-response_with_ans = ""
-messages = assistant._oai_messages[user_proxy]
-for j in range(len(messages) - 1, -1, -1):
-    if (
-        messages[j]["role"] == "assistant"
-        and messages[j]["content"].strip() != "TERMINATE"
-        and messages[j]["content"].strip() != "TERMINATE."
-    ):
-        response_with_ans = messages[j]["content"]
-        break
-
+build_manager = autogen.OpenAIWrapper(config_list=config_list)
+response_with_ans = build_manager.create(
+    messages=[
+        {
+            "role": "user",
+            "content": PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS),
+        }
+    ]
+).choices[0].message.content
 
 # ---------between "answer_checker" and "checker_proxy"---------
 # define answer checker chat
@@ -108,4 +84,4 @@ checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 
 ####################
-testbed_utils.finalize(agents=[assistant, user_proxy, answer_checker, checker_proxy])
+testbed_utils.finalize(agents=[answer_checker, checker_proxy])

@@ -20,13 +20,9 @@ TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 SELECTED_CHEM_PROBLEMS = [
-    "../scibench/dataset/original/quan.json", # 42
     "../scibench/dataset/original/quan_sol.json",
-    "../scibench/dataset/original/chemmc.json", # 48
     "../scibench/dataset/original/chemmc_sol.json",
-    "../scibench/dataset/original/atkins.json", # 123
     "../scibench/dataset/original/atkins_sol.json",
-    "../scibench/dataset/original/matter.json", # 59
     "../scibench/dataset/original/matter_sol.json",
 ]
 

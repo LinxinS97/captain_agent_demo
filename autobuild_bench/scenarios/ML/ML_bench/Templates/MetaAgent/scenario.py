@@ -64,6 +64,7 @@ question = """# README
 # Task instruction
 - You need to consider the README carefully and write a python bash script to fulfill the user's need, taking care of the arguments in the script to match the user's instruction.
 - You cannot run the python bash script or python code and testing them will have no feedbacks but only errors.
+- You don't need to verify the answer.
 - Your final answer should be a single line python bash script.
 - Do not suggest any code or scripts in ```...``` format. This will causes errors.
 

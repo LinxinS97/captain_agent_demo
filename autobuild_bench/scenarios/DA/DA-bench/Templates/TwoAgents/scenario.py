@@ -1,6 +1,6 @@
+import os
+import json
 import autogen
-from autogen.agentchat.contrib.meta_prompting_orig import MetaPromptAgent
-import re
 import testbed_utils
 
 testbed_utils.init()
@@ -19,7 +19,7 @@ with open("question.txt", "rt") as fh:
 
 PROMPT = """Let's solve a data analysis problem. Given an absolute csv file path, you are required to answer a question following a constraint. When you have reached a final answer, conclude your response and end it with 'TERMINATE'.
 
-FILE PATH: ../data.csv
+FILE PATH: data.csv
 QUESTION: {question}
 CONSTRAINT: {constraint}
 After verification, reply with the final answer as the format of {formats}.
@@ -33,35 +33,43 @@ with open("expected_answer.txt", "rt") as fh:
 config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
 llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
+assistant = autogen.AssistantAgent(
+    "assistant",
+    llm_config=llm_config,
+    is_termination_msg=lambda x: x.get("content", "").find("STOP") >= 0,
+)
+
 user_proxy = autogen.UserProxyAgent(
     "user_proxy",
     human_input_mode="NEVER",
-    is_termination_msg=lambda x: x.get("content", "").find("FINAL ANSWER") >= 0,
+    is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
     code_execution_config={
         "work_dir": "coding",
         "use_docker": False,
     },
-    max_consecutive_auto_reply=0,
-    default_auto_reply="TERMINATE",
+    max_consecutive_auto_reply=10,
+    default_auto_reply="STOP",
 )
 
-meta_prompt_agent = MetaPromptAgent(
-    name="Metaprompt Agent",
-    llm_config=llm_config,
-    is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
-)
+user_proxy.initiate_chat(assistant, message=PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS))
 
-user_proxy.initiate_chat(meta_prompt_agent, message=PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS))
 
 # --------- extract reply ---------
 response_with_ans = ""
-messages = meta_prompt_agent._oai_messages[user_proxy][-1]["content"]
-pattern = "FINAL ANSWER:(.*)"
-reply = re.findall(pattern, messages, re.DOTALL)
-if len(reply) > 0:
-    response_with_ans = reply[0].strip()
+messages = assistant._oai_messages[user_proxy]
+for j in range(len(messages) - 1, -1, -1):
+    if (
+        messages[j]["role"] == "assistant"
+        and messages[j]["content"].strip() != "TERMINATE"
+        and messages[j]["content"].strip() != "TERMINATE."
+    ):
+        response_with_ans = messages[j]["content"]
+        break
 
-# --------- call LLM to check the answer ---------
+
+# ---------between "answer_checker" and "checker_proxy"---------
+# define answer checker chat
+
 check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to verify the answer.
 You are given:
     1. A problem.
@@ -98,5 +106,6 @@ checker_proxy = autogen.UserProxyAgent(
 message_to_check = "Problem: " + QUESTION + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER + "\n\nFormats:" + FORMATS
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
+
 ####################
-testbed_utils.finalize(agents=[meta_prompt_agent, user_proxy, answer_checker, checker_proxy])
+testbed_utils.finalize(agents=[assistant, user_proxy, answer_checker, checker_proxy])

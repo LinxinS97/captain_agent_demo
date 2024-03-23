@@ -11,13 +11,13 @@ SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
 SCENARIO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
 TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
 TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
-DATA_DIR = os.path.join(SCENARIO_DIR, "data")
+DATA_DIR = os.path.join(SCENARIO_DIR, "Downloads")
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 
 def load_data():
-    label_path = os.path.join(DATA_DIR, "da-dev-labels.jsonl")
-    question_path = os.path.join(DATA_DIR, "da-dev-questions.jsonl")
+    label_path = os.path.join(DATA_DIR, "reduced-da-dev-labels.jsonl")
+    question_path = os.path.join(DATA_DIR, "reduced-da-dev-questions.jsonl")
 
     # Load label data
     label_data = []
@@ -58,14 +58,13 @@ def create_jsonl(name, problems, template, agent_list=None):
                 "template": os.path.join(os.path.pardir, template),
                 "substitutions": {
                     "constraint.txt": {"__CONSTRAINT__": problem["constraints"]},
-                    "data.csv": {"__CSV__": open("data/da-dev-tables/" + problem["file_name"]).read()},
+                    "data.csv": {"__CSV__": open("../Downloads/da-dev-tables/" + problem["file_name"]).read()},
                     "expected_answer.txt": {"__ANSWER__": answer},
                     "format.txt": {"__FORMAT__": problem["format"]},
                     "question.txt": {"__QUESTION__": problem["question"]},
                     "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
                 },
             }
-
             fh.write(json.dumps(record).strip() + "\n")
 
 

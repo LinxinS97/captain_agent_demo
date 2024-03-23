@@ -19,7 +19,7 @@ with open("question.txt", "rt") as fh:
 
 PROMPT = """Let's solve a data analysis problem. Given an absolute csv file path, you are required to answer a question following a constraint. When you have reached a final answer, conclude your response and end it with 'TERMINATE'.
 
-FILE PATH: ../data.csv
+FILE PATH: data.csv
 QUESTION: {question}
 CONSTRAINT: {constraint}
 After verification, reply with the final answer as the format of {formats}.
@@ -58,7 +58,7 @@ meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
     code_execution_config={},
-    agent_config_save_path="/home/kattolab/luo/home/autogen-autobuild-dev/autobuild_bench/scenarios/DA/Saved_agents"
+    agent_config_save_path="/autobuild_bench/scenarios/DA/DA-bench/Saved_agents"
 )
 
 ## Run task

@@ -1,7 +1,6 @@
-import os
-import json
 import autogen
 import testbed_utils
+from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
 testbed_utils.init()
 
@@ -19,7 +18,7 @@ with open("question.txt", "rt") as fh:
 
 PROMPT = """Let's solve a data analysis problem. Given an absolute csv file path, you are required to answer a question following a constraint. When you have reached a final answer, conclude your response and end it with 'TERMINATE'.
 
-FILE PATH: ../data.csv
+FILE PATH: data.csv
 QUESTION: {question}
 CONSTRAINT: {constraint}
 After verification, reply with the final answer as the format of {formats}.
@@ -29,19 +28,52 @@ ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
 
-####################
-config_list = autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106"]})
-llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
+AGENT_CONFIGS = ""
+with open("agent_list.txt", "rt") as fh:
+    AGENT_CONFIGS = fh.read()
 
-build_manager = autogen.OpenAIWrapper(config_list=config_list)
-response_with_ans = build_manager.create(
-    messages=[
-        {
-            "role": "user",
-            "content": PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS),
-        }
-    ]
-).choices[0].message.content
+####################
+# Task parameters
+max_agents = 10
+config = 'OAI_CONFIG_LIST'
+default_llm_config = {
+    "temperature": 1,
+    "top_p": 0.95,
+    "max_tokens": 1024,
+}
+
+## build agents
+config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4-1106"]})
+builder = AgentBuilder(config_file_or_env=config,
+                       builder_model='gpt-4-1106',
+                       agent_model='gpt-4-1106',
+                       max_agents=max_agents)
+agent_list, _ = builder.load(config_json=AGENT_CONFIGS)
+
+## Run task
+group_chat = autogen.GroupChat(agents=agent_list, messages=[], max_round=20)
+manager = autogen.GroupChatManager(
+    groupchat=group_chat, code_execution_config={'use_docker': False}, llm_config={"config_list": config_list, **default_llm_config}
+)
+agent_list[0].initiate_chat(manager, message=PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS))
+
+## collect response
+messages = []
+key = list(agent_list[0].chat_messages.keys())[0]
+chat_messages = agent_list[0].chat_messages[key]
+for item in chat_messages:
+    messages.append(item)
+messages.reverse()
+
+response_with_ans = "No answer."
+for msg in messages:
+    if (
+        msg["content"] != "TERMINATE"
+        and msg["content"] != "TERMINATE."
+        and msg['role'] != 'assistant'
+    ):
+        response_with_ans = msg["content"]
+        break
 
 # ---------between "answer_checker" and "checker_proxy"---------
 # define answer checker chat
@@ -60,7 +92,11 @@ Please do the following:
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The reply doesn't contain an answer." """
 
-answer_checker = autogen.AssistantAgent(name="checker", llm_config=llm_config, system_message=check_sys_msg)
+answer_checker = autogen.AssistantAgent(
+    name="checker",
+    llm_config={"config_list": config_list, **default_llm_config},
+    system_message=check_sys_msg
+)
 checker_proxy = autogen.UserProxyAgent(
     "checker_proxy",
     human_input_mode="NEVER",
@@ -79,9 +115,9 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "Problem: " + QUESTION + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER + "\n\nFormats:" + FORMATS
+message_to_check = "[Problem]: " + QUESTION + f"\n[Reply]: {response_with_ans}\n\n[Ground truth answer]: " + ANSWER + "\n\nFormats:" + FORMATS
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 
 ####################
-testbed_utils.finalize(agents=[answer_checker, checker_proxy])
+testbed_utils.finalize(agents=agent_list + [answer_checker, checker_proxy])

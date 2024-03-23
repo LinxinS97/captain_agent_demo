@@ -1,5 +1,5 @@
 import autogen
-from autogen.agentchat.contrib.meta_prompting_agent_autogen import MetaPromptAgent
+from autogen.agentchat.contrib.meta_prompting_orig import MetaPromptAgent
 import re
 import testbed_utils
 
@@ -19,7 +19,7 @@ with open("question.txt", "rt") as fh:
 
 PROMPT = """Let's solve a data analysis problem. Given an absolute csv file path, you are required to answer a question following a constraint. When you have reached a final answer, conclude your response and end it with 'TERMINATE'.
 
-FILE PATH: ../data.csv
+FILE PATH: data.csv
 QUESTION: {question}
 CONSTRAINT: {constraint}
 After verification, reply with the final answer as the format of {formats}.
@@ -55,26 +55,18 @@ user_proxy.initiate_chat(meta_prompt_agent, message=PROMPT.format(question=QUEST
 
 # --------- extract reply ---------
 response_with_ans = ""
-messages = meta_prompt_agent._oai_messages[user_proxy]
-for j in range(len(messages) - 1, -1, -1):
-    if (
-        messages[j]["role"] == "assistant"
-        and messages[j]["content"].strip() != "TERMINATE"
-        and messages[j]["content"].strip() != "TERMINATE."
-    ):
-        response_with_ans = messages[j]["content"]
-        response_with_ans = response_with_ans[: response_with_ans.rfind("TERMINATE")]
-        break
+messages = meta_prompt_agent._oai_messages[user_proxy][-1]["content"]
+pattern = "FINAL ANSWER:(.*)"
+reply = re.findall(pattern, messages, re.DOTALL)
+if len(reply) > 0:
+    response_with_ans = reply[0].strip()
 
-
-# ---------between "answer_checker" and "checker_proxy"---------
-# define answer checker chat
-
-check_sys_msg = """You are a helpful AI assistant. You will use your language skills to verify if an answer is correct.
+# --------- call LLM to check the answer ---------
+check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to verify the answer.
 You are given:
     1. A problem.
     2. A reply with the answer to the problem.
-    3. A ground truth answer following a specific given format.
+    3. A ground truth answer.
 Please do the following:
 1. Extract the answer in the reply: "The answer is <answer extracted>".
 2. Check whether the answer in the reply matches the ground truth answer. When comparison is not obvious (for example, 3*\\sqrt(6) and 7.348), you may write code to check the answer and wait for the user to execute the code.
@@ -103,16 +95,8 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = (
-    "Problem: "
-    + QUESTION
-    + f"\n\nReply: {response_with_ans}\n\nGround truth answer: "
-    + ANSWER
-    + "\n\nFormat: "
-    + FORMATS
-)
+message_to_check = "Problem: " + QUESTION + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER + "\n\nFormats:" + FORMATS
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
-
 
 ####################
 testbed_utils.finalize(agents=[meta_prompt_agent, user_proxy, answer_checker, checker_proxy])

@@ -67,8 +67,11 @@ class MetaAgent(ConversableAgent):
                     "building_task": {
                         "type": "string",
                         "description": """This instruction helps a build manager to build a group of experts for your task.
-- You should highlight the coding and verification part.
-- You should suggest some possible experts' name with corresponding descriptions with the format agent_name: description. The name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
+- You should highlight the coding and verification skills.
+- You should suggest some possible experts' name with corresponding descriptions with the format:
+    agent_name1: description
+    agent_name2: description
+- The name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
 - building_task should also include the information of execution_task without any deletion or ambiguity.""",
                     },
                     "execution_task": {
@@ -108,8 +111,11 @@ Autobuild can build a group of experts and let them chat with each other in a gr
 
 ## building_task
 This instruction helps a build manager to build a group of experts for your task.
-- You should highlight the coding and verification part.
-- You should suggest some possible experts' name with corresponding descriptions with the format agent_name: description. The name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
+- You should highlight the coding and verification skills.
+- You should suggest some possible experts' name with corresponding descriptions with the format:
+    agent_name1: description
+    agent_name2: description
+- The name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
 - building_task should also include the information of execution_task without any deletion or ambiguity.
 
 ## execution_task

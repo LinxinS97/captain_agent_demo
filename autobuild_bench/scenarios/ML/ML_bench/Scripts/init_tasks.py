@@ -71,17 +71,17 @@ def create_jsonl(name, dataset, template, agent_list=None, readme_cache=None):
 
             print(f"Converting: {task_id}")
 
-            readme = readme_cache.get(task_id, None)
-            if readme is None:
-                readme = get_readme(data['readme'])
-                readme_cache[task_id] = readme
+            # readme = readme_cache.get(task_id, None)
+            # if readme is None:
+            #     readme = get_readme(data['readme'])
+            #     readme_cache[task_id] = readme
 
             record = {
                 "id": task_id,
                 "template": os.path.join(os.path.pardir, template),
                 "substitutions": {
                     "prompt.txt": {"__PROMPT__": data["instruction"]},
-                    "readme.txt": {"__README__": readme},
+                    "readme.txt": {"__README__": data["oracle_segmet"]},
                     "expected_answer.txt": {"__ANSWER__": json.dumps(data["arguments"])},
                     "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
                 },
