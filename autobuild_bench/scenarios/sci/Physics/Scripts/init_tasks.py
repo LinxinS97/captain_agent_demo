@@ -3,8 +3,6 @@
 # (default: ../scenarios/human_eval_two_agents_gpt4.jsonl and ./scenarios/human_eval_two_agents_gpt35.jsonl)
 #
 
-import requests
-import tarfile
 import json
 import os
 import re
@@ -21,12 +19,9 @@ DOWNLOADS_DIR = os.path.join(SCENARIO_DIR, "Downloads")
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 SELECTED_PHY_PROBLEMS = [
-    "../scibench/dataset/original/fund.json", # 83
-    "../scibench/dataset/original/fund_sol.json",
-    "../scibench/dataset/original/thermo.json", # 84
-    "../scibench/dataset/original/thermo_sol.json",
-    "../scibench/dataset/original/class.json", # 54
-    "../scibench/dataset/original/class_sol.json",
+    "../../Downloads/fund_sol.json",
+    "../../Downloads/thermo_sol.json",
+    "../../Downloads/class_sol.json",
 ]
 
 
@@ -42,7 +37,7 @@ def load_data():
     return selected_problems
 
 
-def create_jsonl(name, problems, template, agent_list = None):
+def create_jsonl(name, problems, template, agent_list=None):
     """Creates a JSONL scenario file with a given name, dictionary of Physics problems, and template path."""
 
     # Create a task directory if it doesn't exist
@@ -116,6 +111,7 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     for t in templates.items():
         create_jsonl(f"sci_phy_{t[0]}", problems, t[1], agent_list=agent_configs)
+
 
 if __name__ == "__main__" and __package__ is None:
     main()

@@ -23,7 +23,9 @@ with open("expected_answer.txt", "rt") as fh:
 ####################
 # Task parameters
 general_llm_config = {
-    "temperature": 0,
+    "temperature": 1,
+    "top_p": 0.95,
+    "max_tokens": 1500,
     "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106"]}),
 }
 nested_mode_config = {
@@ -38,7 +40,7 @@ nested_mode_config = {
             "top_p": 0.95,
             "max_tokens": 1500,
         },
-        "coding": True
+        "coding": False
     },
     "group_chat_config": {"max_round": 15},
     "group_chat_llm_config": general_llm_config.copy(),
@@ -48,26 +50,25 @@ meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config.copy(), 
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
-    code_execution_config={
-        "use_docker": False,
-    },
+    code_execution_config=False,
+    agent_config_save_path="/Users/elpis/llm/autogen-autobuild-dev/autobuild_bench/scenarios/ML/ML_Bench/Saved_agents"
 )
 
 ## Run task
-question = """Please solve the following machine learning development problem given by a user: 
-{problem}
-
-You can refer to the following README:
+question = """# README
 {readme}
 
-You need to consider the README carefully and write a python bash script to fulfill the user's need, taking care of the arguments in the script to match the user's instruction.
-In this task, you cannot run the python bash script or python code and testing them will have no feedbacks but only errors.
-Your final answer should be a single line python bash script in the following format:
+# User instruction
+{problem}
 
->>> python YOUR ANSWER
+# Task instruction
+- You need to consider the README carefully and write a python bash script to fulfill the user's need, taking care of the arguments in the script to match the user's instruction.
+- You cannot run the python bash script or python code and testing them will have no feedbacks but only errors.
+- Your final answer should be a single line python bash script.
+- Do not suggest any code or scripts in ```...``` format. This will causes errors.
 
-Do not suggest any code or scripts in ```...``` format. This will causes errors.
-"""
+# Output format
+>>> python YOUR ANSWER"""
 
 meta_user_proxy.initiate_chat(
     meta_agent,

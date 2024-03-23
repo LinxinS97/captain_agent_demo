@@ -1,4 +1,5 @@
 import autogen
+import json
 import testbed_utils
 from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
@@ -38,7 +39,7 @@ builder = AgentBuilder(config_file_or_env=config,
                        builder_model='gpt-4-1106',
                        agent_model='gpt-4-1106',
                        max_agents=max_agents)
-agent_list, _ = builder.load(config_json=AGENT_CONFIGS)
+agent_list, _ = builder.load(config_json=AGENT_CONFIGS, code_execution_config=False)
 
 ## Run task
 group_chat = autogen.GroupChat(agents=agent_list, messages=[], max_round=20)

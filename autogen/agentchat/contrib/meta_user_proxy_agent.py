@@ -128,7 +128,7 @@ Conversation history:
         check_nested_mode_config(nested_mode_config)
         self._agent_config_save_path = agent_config_save_path
         self._nested_mode_config = nested_mode_config.copy()
-        self._code_execution_config = code_execution_config.copy()
+        self._code_execution_config = code_execution_config
         self.build_history = {}
 
     def _run_autobuild(self, group_name: str, execution_task: str, building_task: str = "") -> str:

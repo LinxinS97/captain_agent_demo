@@ -55,18 +55,31 @@ class MetaAgent(ConversableAgent):
         "type": "function",
         "function": {
             "name": "autobuild",
-            "description": "Use building_task to build a group of experts to solve your execution_task by conversation. This function will return the summarization of the conversation history.",
+            "description": """Autobuild can build a group of experts and let them chat with each other in a group chat to solve the task you provided.
+- Autobuild will summarize the essence of the experts' conversation and the derived conclusions.
+- You cannot modify any task information from meta_user_proxy, including code blocks, but you can provide extra information.
+- Within a single response, you are limited to initiating one group of experts.
+""",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "group_name": {"type": "string", "description": "[REQUIRED] Name of the group."},
                     "building_task": {
                         "type": "string",
-                        "description": "[REQUIRED] instruction that helps a build manager to build a group of experts for your task. You must describe the building_task as detailed as possible without any ambigious, highlight the coding and verification skills, and suggest some possible experts' identity with corresponding description. Note that coding skill is useful in most situations. Building_task should also include the information of execution_task without any deletion or ambigious.",
+                        "description": """This instruction helps a build manager to build a group of experts for your task.
+- You should highlight the coding and verification part.
+- You should suggest some possible experts' name with corresponding descriptions with the format agent_name: description. The name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
+- building_task should also include the information of execution_task without any deletion or ambiguity.""",
                     },
                     "execution_task": {
                         "type": "string",
-                        "description": "[REQUIRED] task that needs the experts to solve by conversation. It should include the problem that needs to be solved. You cannot modify any task information from meta_user_proxy, including code blocks, but you can provide extra information.",
+                        "description": """This is the task that needs the experts to solve by conversation.
+- The experts don't understand anything (files, codes, conversation histories) except the information you provided in the execution_task.
+- It should include the plan of how to solve the task.
+- It should include the output format of the task.
+- It should include some examples and its corresponding instruction of the solution.
+- It should include the constrains and conditions for completion.
+- Every time you provide the execution_task, check the first message from user again and make sure the modified execution task includes the user's task information. """,
                     },
                 },
             },
@@ -74,8 +87,7 @@ class MetaAgent(ConversableAgent):
         },
     }
 
-    AUTOBUILD_SYSTEM_MESSAGE = """
-# Your role
+    AUTOBUILD_SYSTEM_MESSAGE = """# Your role
 You are a manager of a group of advanced experts.
 
 # When a task is assigned to you...
@@ -88,42 +100,40 @@ You can solve the task in two ways:
 1. Delegate the resolution of tasks to other experts created by "autobuild" and derive conclusive insights from their conversation summarization.
 2. Analysis and solve the task by your coding and language skills.
 
-## Some useful instructions
+# Autobuild
+Autobuild can build a group of experts and let them chat with each other in a group chat to solve the task you provided.
+- Autobuild will summarize the essence of the experts' conversation and the derived conclusions.
+- You should not modify any task information from meta_user_proxy, including code blocks, but you can provide extra information.
+- Within a single response, you are limited to initiating one group of experts.
+
+## building_task
+This instruction helps a build manager to build a group of experts for your task.
+- You should highlight the coding and verification part.
+- You should suggest some possible experts' name with corresponding descriptions with the format agent_name: description. The name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
+- building_task should also include the information of execution_task without any deletion or ambiguity.
+
+## execution_task
+This is the task that needs the experts to solve by conversation.
+- The experts don't understand anything (files, codes, conversation histories) except the information you provided in the execution_task.
+- It should include the plan of how to solve the task.
+- It should include the output format of the task.
+- It should include some examples and its corresponding instruction of the solution.
+- It should include the constrains and conditions for completion.
+- Every time you provide the execution_task, check the first message from user again and make sure the modified execution task includes the user's task information.
+
+# What should do after autobuild?
+- After you receive the summarization, you should conduct a thorough verification.
+- If the experts cannot make a conclusion for your task, analyze the summarization and the execution task carefully and try again with the same group name but a modified execution task. 
+- After completing all tasks and verifications, you should conclude the operation and reply "TERMINATE"
+
+# Some useful instructions
+- The experts don't understand anything (files, codes, conversation histories) except the information you provided in the execution_task.
 - Solve the task step by step if you need to. 
 - Be clear about which step uses code, which step uses your language skill, and which step to build a group chat.
 - If the code's result indicates there is an error, fix the error and output the code again. 
 - If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
 - When you find an answer, verify the answer carefully. 
 - Include verifiable evidence in your response if possible.
-
-# About "autobuild"
-## Overall
-- Autobuild can build a group of experts and let them chat with each other in a group chat to solve the task you provided.
-- The experts cannot access your previous messages, make sure you have provided enough information for them.
-- Autobuild will summarize the essence of the experts' conversation and the derived conclusions.
-- You cannot modify any task information from meta_user_proxy, including code blocks, but you can provide extra information.
-- Within a single response, you are limited to initiating one group of experts.
-
-## How to use autobuild?
-You should suggest a building_task and an execution_task.
-
-### building_task
-- The instruction that helps a build manager to build a group of experts for your task.
-- You must describe the building_task as detailed as possible.
-- You should highlight the coding and verification part
-- You should suggest some possible experts' name with corresponding descriptions, e.g., algebra_expert
-- Coding skills are useful in most situations.
-- building_task should also include the information of execution_task without any deletion or ambiguity.
-
-### execution_task
-- The task that needs the experts to solve by conversation. 
-- It should include the problem that needs to be solved without any deletion or ambiguity.
-- Every time you provide the execution_task, check the initial task again and make sure the modified execution task includes the user's task information. 
-
-## What should do after autobuild?
-- After you receive the summarization, you should conduct a thorough verification.
-- If the experts cannot make a conclusion for your task, analyze the summarization and the execution task carefully and try again with the same group name but a modified execution task. 
-- After completing all tasks and verifications, you should conclude the operation and reply "TERMINATE"
 """
 
     META_PROMPTING_SYSTEM_MESSAGE = """You are Meta-Expert, an extremely clever expert with the unique ability to collaborate with multiple experts (such as Expert Problem Solver, Expert Mathematician, Expert Essayist, etc.) to tackle any task and solve any complex problems. Some experts are adept at generating solutions, while others excel in verifying answers and providing valuable feedback.

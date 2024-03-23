@@ -34,8 +34,7 @@ class AgentBuilder:
 
     online_server_name = "online"
 
-    DEFAULT_SYSTEM_MESSAGE = """
-# Your role
+    DEFAULT_SYSTEM_MESSAGE = """# Your role
 A helpful AI assistant.
 
 # Task and skill instructions
@@ -78,35 +77,28 @@ TASK: {task}
 Answer only YES or NO.
 """
 
-    AGENT_NAME_PROMPT = """
-# Your goal
-To complete the following task, what experts should be invited to maximize the efficiency?
+    AGENT_NAME_PROMPT = """# Your task
+According to the following user requirement, suggest less then {max_agents} experts with their name to fulfill user's need.
 
-# TASK
+# User requirement
 {task}
 
-# Requirement
-- Considering the effort, the experts in this task should be no more than {max_agents}; less is better.
+# Task requirement
 - Experts' name should be specific. For example, use "python_programmer" instead of "programmer".
-- Experts should relate to the task but significantly different in their duty.
 - Generated experts' name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
 - Answer the names of the experts, separated names by ",".
-- Only return the list of experts.
+- Only return the list of expert names.
 """
 
-    AGENT_SYS_MSG_PROMPT = """
-# Your goal
+    AGENT_SYS_MSG_PROMPT = """# Your goal
 - For the following TASK, write a high-quality description for the experts by modifying the DEFAULT DESCRIPTION.
-- Your response should be in the second person perspective. 
-- Ensure that your instructions are clear and unambiguous, and include all necessary information within the triple quotes. 
-- All experts should equipped with python coding skill. They need coding at a proper time when solving programmatic/math/logic/complex tasks.
-- You should highlight in the description that expert should print the result by using "print" function everytime when they provide codes.
-- You should let the expert to shorten their response length as possible as they can to prevent redundancy outputs.
+- Ensure that your instructions are clear and unambiguous, and include all necessary information.
+- Experts need programming at a proper time when solving programmatic/math/logic/complex tasks.
 
 # Task
 {task}
 
-# EXPERT NAME
+# Experts
 {position}
 
 # DEFAULT DESCRIPTION (filled in [[...]])
@@ -115,8 +107,7 @@ To complete the following task, what experts should be invited to maximize the e
 ]]
 """
 
-    AGENT_DESCRIPTION_PROMPT = """
-# Your goal
+    AGENT_DESCRIPTION_PROMPT = """# Your goal
 Summarize the following expert's description in a sentence.
 
 # EXPERT NAME
@@ -128,8 +119,7 @@ Summarize the following expert's description in a sentence.
 ]]
 """
 
-    AGENT_SEARCHING_PROMPT = """
-# Your goal
+    AGENT_SEARCHING_PROMPT = """# Your goal
 Considering the following task, what experts should be involved to the task?
 
 # TASK
@@ -468,13 +458,17 @@ Considering the following task, what experts should be involved to the task?
             )
             agent_description_list.append(resp_agent_description)
 
+        user_proxy_desc = ""
+        if coding is True:
+            user_proxy_desc = f"\nThe group also include a Computer_terminal to help you run the python and shell code."
+
         for name, sys_msg, description in list(zip(agent_name_list, agent_sys_msg_list, agent_description_list)):
             enhanced_sys_msg = """You are now working in a group chat with different expert and a group chat manager.
-            Here is the members' name: {members}
+            Here is the members' name: {members}{user_proxy_desc}
             The group chat manager will select the speaker who can speak at the current time, but if there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
             When the task is complete and the result has been carefully verified, after agreement of the other members, you can end the conversation by replying only with "TERMINATE".
             Here is your profile: """
-            enhanced_sys_msg = enhanced_sys_msg.format(members=agent_name_list)
+            enhanced_sys_msg = enhanced_sys_msg.format(members=agent_name_list, user_proxy_desc=user_proxy_desc)
             enhanced_sys_msg += sys_msg
             agent_configs.append(
                 {
@@ -579,7 +573,7 @@ Considering the following task, what experts should be involved to the task?
                 embedding_function=embedding_functions.SentenceTransformerEmbeddingFunction(model_name=embedding_model),
             )
             collection.add(
-                documents=[agent["profile"] for agent in agent_library],
+                documents=[agent["description"] for agent in agent_library],
                 metadatas=[{"source": "agent_profile"} for _ in range(len(agent_library))],
                 ids=[f"agent_{i}" for i in range(len(agent_library))],
             )
@@ -661,7 +655,7 @@ Considering the following task, what experts should be involved to the task?
 
         user_proxy_desc = ""
         if coding is True:
-            user_proxy_desc = f"\nThe group chat also include a Computer_terminal to help you run the python and shell code."
+            user_proxy_desc = f"\nThe group also include a Computer_terminal to help you run the python and shell code."
 
         for name, sys_msg, description in list(zip(agent_name_list, agent_sys_msg_list, agent_profile_list)):
             enhanced_sys_msg = """You are now working in a group chat with different expert and a group chat manager.

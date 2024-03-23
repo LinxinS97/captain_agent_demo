@@ -20,6 +20,27 @@ TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 DOWNLOADS_DIR = os.path.join(SCENARIO_DIR, "Downloads")
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
+SELECTED_PROBLEMS = [
+    "gnn_1",
+    "gnn_2",
+    "gnn_3",
+    "text_7",
+    "text_8",
+    "text_9",
+    "molecular_15",
+    "molecular_16",
+    "molecular_17",
+    "image_22",
+    "image_23",
+    "image_24",
+    "video_45",
+    "video_46",
+    "video_47",
+    "time_series_60",
+    "time_series_61",
+    "time_series_62",
+    "time_series_63"
+]
 
 def get_readme(url):
     response = requests.get(url)
@@ -42,11 +63,12 @@ def create_jsonl(name, dataset, template, agent_list=None, readme_cache=None):
     with open(os.path.join(TASKS_DIR, name + ".jsonl"), "wt") as fh:
         for item in dataset:
             data = json.loads(item)
-            if "python " not in data['output'] and "python3 " not in data['output']:
-                continue
 
             domain = data['domain'].lower().replace(' ', '_').replace('-', '_')
             task_id = f"{domain}_{data['id']}"
+            if task_id not in SELECTED_PROBLEMS:
+                continue
+
             print(f"Converting: {task_id}")
 
             readme = readme_cache.get(task_id, None)
