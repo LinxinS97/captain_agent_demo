@@ -38,7 +38,7 @@ response_with_ans = build_manager.create(
     messages=[
         {
             "role": "user",
-            "content": PROMPT.format(problem=PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS)),
+            "content": PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS),
         }
     ]
 ).choices[0].message.content
@@ -79,7 +79,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "Problem: " + QUESTION + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
+message_to_check = "Problem: " + QUESTION + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER + "\n\nFormats:" + FORMATS
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 

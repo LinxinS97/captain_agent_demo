@@ -36,7 +36,7 @@ llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 assistant = autogen.AssistantAgent(
     "assistant",
     llm_config=llm_config,
-    is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
+    is_termination_msg=lambda x: x.get("content", "").find("STOP") >= 0,
 )
 
 user_proxy = autogen.UserProxyAgent(
@@ -48,7 +48,7 @@ user_proxy = autogen.UserProxyAgent(
         "use_docker": False,
     },
     max_consecutive_auto_reply=10,
-    default_auto_reply="TERMINATE",
+    default_auto_reply="STOP",
 )
 
 user_proxy.initiate_chat(assistant, message=PROMPT.format(question=QUESTION, constraint=CONSTRAINT, formats=FORMATS))
@@ -103,7 +103,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "Problem: " + QUESTION + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
+message_to_check = "Problem: " + QUESTION + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER + "\n\nFormats:" + FORMATS
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 

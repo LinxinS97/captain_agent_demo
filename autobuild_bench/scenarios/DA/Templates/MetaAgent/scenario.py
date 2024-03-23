@@ -58,7 +58,7 @@ meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
     code_execution_config={},
-    agent_config_save_path="/home/kattolab/luo/home/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Chemistry/Saved_agents"
+    agent_config_save_path="/home/kattolab/luo/home/autogen-autobuild-dev/autobuild_bench/scenarios/DA/Saved_agents"
 )
 
 ## Run task
@@ -125,7 +125,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "[Problem]: " + QUESTION + f"\n[Reply]: {response_with_ans}\n\n[Ground truth answer]: " + ANSWER
+message_to_check = "Problem: " + QUESTION + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER + "\n\nFormats:" + FORMATS
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 
