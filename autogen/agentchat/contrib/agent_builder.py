@@ -78,17 +78,15 @@ Answer only YES or NO.
 """
 
     AGENT_NAME_PROMPT = """# Your task
-According to the following user requirement, suggest less then {max_agents} experts with their name to fulfill user's need.
+Suggest less then {max_agents} experts with their name to complete the following task.
 
-# User requirement
+# task
 {task}
 
 # Task requirement
-- Experts' name should be specific. For example, use "python_programmer" instead of "programmer".
+- When some possible experts in the task, take that experts as your reply without any modification.
 - Generated experts' name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
-- Answer the names of the experts, separated names by ",".
-- Only return the list of expert names.
-"""
+- Only reply the names of the experts, separated names by ","."""
 
     AGENT_SYS_MSG_PROMPT = """# Your goal
 - For the following TASK, write a high-quality description for the experts by modifying the DEFAULT DESCRIPTION.
@@ -98,7 +96,7 @@ According to the following user requirement, suggest less then {max_agents} expe
 # Task
 {task}
 
-# Experts
+# Expert name
 {position}
 
 # DEFAULT DESCRIPTION (filled in [[...]])
@@ -460,15 +458,16 @@ Considering the following task, what experts should be involved to the task?
 
         user_proxy_desc = ""
         if coding is True:
-            user_proxy_desc = f"\nThe group also include a Computer_terminal to help you run the python and shell code."
+            user_proxy_desc = f"\nThe group also include a role called Computer_terminal to help you run the python code and bash script."
 
         for name, sys_msg, description in list(zip(agent_name_list, agent_sys_msg_list, agent_description_list)):
             enhanced_sys_msg = """You are now working in a group chat with different expert and a group chat manager.
-            Here is the members' name: {members}{user_proxy_desc}
-            The group chat manager will select the speaker who can speak at the current time, but if there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
-            When the task is complete and the result has been carefully verified, after agreement of the other members, you can end the conversation by replying only with "TERMINATE".
-            Here is your profile: """
-            enhanced_sys_msg = enhanced_sys_msg.format(members=agent_name_list, user_proxy_desc=user_proxy_desc)
+Here is the members' name: {members}{user_proxy_desc}
+Your name is: {name}.
+The group chat manager will select the speaker who can speak at the current time, but if there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
+When the task is complete and the result has been carefully verified, after agreement of the other members, you can end the conversation by replying only with "TERMINATE".
+Here is your profile: """
+            enhanced_sys_msg = enhanced_sys_msg.format(name=name, members=agent_name_list, user_proxy_desc=user_proxy_desc)
             enhanced_sys_msg += sys_msg
             agent_configs.append(
                 {

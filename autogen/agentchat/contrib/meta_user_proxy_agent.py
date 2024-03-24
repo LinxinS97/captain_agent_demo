@@ -24,13 +24,22 @@ def check_nested_mode_config(nested_mode_config: Dict):
 class MetaUserProxyAgent(ConversableAgent):
     """(In preview) A proxy agent for the meta agent, that can execute code and provide feedback to the other agents."""
 
-    SUMMARY_PROMPT = """
-Briefly summarize the conversation history derive from a experts' group chat.
+    SUMMARY_PROMPT = """Briefly summarize the conversation history derive from a experts' group chat.
 You should highlight the reasoning process and output exactly the same result at the final.
 If experts in conversation suggest some code finally, you should additionally output the code block without any modification.
 
 Conversation history:
 {chat_history}
+"""
+
+    AUTOBUILD_TASK_DESC = """You are given: (1) a task and advises from your manager with a specific plan and (2) a general task.
+Collect information from the general task, follow the plan from manager to solve the task from manager.
+
+# General Task
+{general_task}
+
+# Task and advises from manager
+{manager_task}
 """
 
     DEFAULT_AUTO_REPLY = "Thank you. Please keep solving the problem. If you think the problem is solved, please reply me only with 'TERMINATE'."
@@ -138,8 +147,8 @@ Conversation history:
             autobuild_llm_config, group_chat_llm_config.
         """
         print("==> Running AutoBuild...", flush=True)
-        print("==> Building task: ", building_task, flush=True)
-        print("==> Execution task: ", execution_task, flush=True)
+        print("\n==> Building task: ", building_task, flush=True)
+        print("\n==> Execution task: ", execution_task, flush=True)
 
         builder = AgentBuilder(**self._nested_mode_config["autobuild_init_config"])
         if group_name in self.build_history.keys():
@@ -157,12 +166,20 @@ Conversation history:
 
         # start nested chat
         nested_group_chat = autogen.GroupChat(
-            agents=agent_list, messages=[], **self._nested_mode_config["group_chat_config"]
+            agents=agent_list,
+            messages=[],
+            allow_repeat_speaker=agent_list[1:] if agent_configs['coding'] is True else agent_list,
+            **self._nested_mode_config["group_chat_config"]
         )
         manager = autogen.GroupChatManager(
             groupchat=nested_group_chat, llm_config=self._nested_mode_config["group_chat_llm_config"]
         )
-        agent_list[0].initiate_chat(manager, message=execution_task)
+        key = list(self.chat_messages.keys())[0]
+        general_task = self.chat_messages[key][0]['content']
+        agent_list[0].initiate_chat(
+            manager,
+            message=self.AUTOBUILD_TASK_DESC.format(general_task=general_task, manager_task=execution_task)
+        )
 
         chat_history = []
         key = list(agent_list[0].chat_messages.keys())[0]

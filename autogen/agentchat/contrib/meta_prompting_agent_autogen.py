@@ -136,7 +136,7 @@ class MetaPromptAgent(ConversableAgent):
         config: Optional[OpenAIWrapper] = None,
     ):
         """For now, we only consider the last message"""
-        print(colored("Below is the inner conversation of the MetaPromptAgent", "yellow"))
+        print(colored("Below is the inner conversation of the MetaPromptAgent", "yellow"), flush=True)
 
         message = messages[-1:].copy()
         input = message[0]["content"]
