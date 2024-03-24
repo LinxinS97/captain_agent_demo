@@ -53,11 +53,12 @@ from my_tests import run_tests
 
 {PROMPT}
 
+# DO NOT MODIFY. 
 # Run the unit tests
+# It will return "all test passed" if the code pass all tests.
 run_tests(__ENTRY_POINT__)
 ```
 
-The pass code should let `run_tests` function return "all test passed".
 """)
 
 ##############################

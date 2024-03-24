@@ -17,13 +17,16 @@ QUESTION = ""
 with open("question.txt", "rt") as fh:
     QUESTION = fh.read()
 
-PROMPT = """Let's solve a data analysis problem. Given an absolute csv file path, you are required to answer a question following a constraint. When you have reached a final answer, conclude your response and end it with 'TERMINATE'.
+PROMPT = """Let's solve a data analysis problem. 
+Given an csv file path, you are required to answer a question following a constraint.
 
-FILE PATH: data.csv
+FILE PATH: ../data.csv
+
 QUESTION: {question}
+
 CONSTRAINT: {constraint}
-After verification, reply with the final answer as the format of {formats}.
-"""
+
+After verification, reply with the final answer as the format of {formats}"""
 
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
@@ -69,8 +72,8 @@ You are given:
     3. A ground truth answer.
 Please do the following:
 1. Extract the answer in the reply: "The answer is <answer extracted>".
-2. Check whether the answer in the reply matches the ground truth answer. When comparison is not obvious (for example, 3*\\sqrt(6) and 7.348), you may write code to check the answer and wait for the user to execute the code.
-3. After everything is done, please choose a reply from the following options:
+2. Check whether the answer in the reply matches the ground truth answer. Only compare the values exist in ground truth answer.
+3. Choose your answer from the following options:
     - "The answer is correct."
     - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."

@@ -17,13 +17,16 @@ QUESTION = ""
 with open("question.txt", "rt") as fh:
     QUESTION = fh.read()
 
-PROMPT = """Let's solve a data analysis problem. Given an absolute csv file path, you are required to answer a question following a constraint. When you have reached a final answer, conclude your response and end it with 'TERMINATE'.
+PROMPT = """Let's solve a data analysis problem. 
+Given an csv file path, you are required to answer a question following a constraint.
 
-FILE PATH: data.csv
+FILE PATH: ../data.csv
+
 QUESTION: {question}
+
 CONSTRAINT: {constraint}
-After verification, reply with the final answer as the format of {formats}.
-"""
+
+After verification, reply with the final answer as the format of {formats}"""
 
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
@@ -32,7 +35,9 @@ with open("expected_answer.txt", "rt") as fh:
 ####################
 # Task parameters
 general_llm_config = {
-    "temperature": 0,
+    "temperature": 1,
+    "top_p": 0.95,
+    "max_tokens": 1500,
     "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106"]}),
 }
 nested_mode_config = {
@@ -57,8 +62,11 @@ meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config, nested_
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
-    code_execution_config={},
-    agent_config_save_path="/autobuild_bench/scenarios/DA/DA-bench/Saved_agents"
+    code_execution_config={
+        "work_dir": "coding",
+        "last_n_messages": 1
+    },
+    agent_config_save_path="/Users/elpis/llm/autogen-autobuild-dev/autobuild_bench/scenarios/DA/DA-bench/Saved_agents"
 )
 
 ## Run task
@@ -95,8 +103,8 @@ You are given:
     3. A ground truth answer.
 Please do the following:
 1. Extract the answer in the reply: "The answer is <answer extracted>".
-2. Check whether the answer in the reply matches the ground truth answer. When comparison is not obvious (for example, 3*\\sqrt(6) and 7.348), you may write code to check the answer and wait for the user to execute the code.
-3. After everything is done, please choose a reply from the following options:
+2. Check whether the answer in the reply matches the ground truth answer. Only compare the values exist in ground truth answer.
+3. Choose your answer from the following options:
     - "The answer is correct."
     - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
@@ -125,7 +133,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "Problem: " + QUESTION + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER + "\n\nFormats:" + FORMATS
+message_to_check = "Problem: [[\n" + QUESTION + f"]]\n\nReply: [[\n{response_with_ans}\n]]\n\nGround truth answer: [[\n" + ANSWER + "]]\n\nFormats: [[\n" + FORMATS + "]]"
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 

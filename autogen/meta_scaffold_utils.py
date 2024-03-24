@@ -79,7 +79,7 @@ class MetaPromptingScaffolding:
             entire_message_log = prompt_or_messages.copy()
 
             while True:
-                entire_message_log[-1]["content"] = f"ROUND {counter+1}:\n\n{entire_message_log[-1]['content']}"
+                entire_message_log[-1]["content"] = f"\n==> ROUND {counter+1}:\n\n{entire_message_log[-1]['content']}"
 
                 if counter == 14:
                     entire_message_log[-1]["content"] += "This is the last round; so, please present your final answer."
@@ -98,7 +98,7 @@ class MetaPromptingScaffolding:
                 entire_message_log.append({"role": "assistant", "content": meta_model_output})
                 print(
                     colored(
-                        f"ROUND {counter} Meta model output:\n",
+                        f"==> ROUND {counter} Meta model output:\n",
                         "yellow",
                     ),
                     flush=True
