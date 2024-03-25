@@ -20,12 +20,8 @@ TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 SELECTED_CHEM_PROBLEMS = [
-    "../scibench/dataset/original/quan_sol.json",
-    "../scibench/dataset/original/chemmc_sol.json",
-    "../scibench/dataset/original/atkins_sol.json",
-    "../scibench/dataset/original/matter_sol.json",
+    "../../Downloads/r_chem.json",
 ]
-
 
 def load_data():
     """Load SCI Chemistry data.
@@ -100,10 +96,12 @@ They need to solve the problem collaboratively and check each other's answer. Al
     if os.path.exists(f"{SAVE_DIR}/autobuild.json"):
         agent_configs = json.load(open(f"{SAVE_DIR}/autobuild.json"))
     else:
-        builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
-                            builder_model='gpt-4-1106',
-                            agent_model='gpt-4-1106',
-                            max_agents=10)
+        builder = AgentBuilder(
+            config_file_or_env='OAI_CONFIG_LIST',
+            builder_model='gpt-4-1106',
+            agent_model='gpt-4-1106',
+            max_agents=10
+        )
         _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
 
         if not os.path.isdir(SAVE_DIR):
@@ -113,6 +111,7 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     for t in templates.items():
         create_jsonl(f"sci_chem_{t[0]}", problems, t[1], agent_list=agent_configs)
+
 
 if __name__ == "__main__" and __package__ is None:
     main()
