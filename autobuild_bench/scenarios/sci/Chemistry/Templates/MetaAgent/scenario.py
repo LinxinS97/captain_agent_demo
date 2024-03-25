@@ -47,7 +47,7 @@ meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
     code_execution_config={},
-    agent_config_save_path="/Users/elpis/llm/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Chemistry/Saved_agents"
+    agent_config_save_path="/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Chemistry/Saved_agents",
 )
 
 ## Run task

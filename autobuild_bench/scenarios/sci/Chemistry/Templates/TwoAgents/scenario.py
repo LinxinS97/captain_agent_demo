@@ -24,7 +24,6 @@ llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
 question = """Please solve the following chemistry problem: 
 {problem}
-Try to approximate by python instead of exact solutions for some problems that may be difficult to calculate. 
 The following python packages are pre-installed: sympy numpy scipy
 Do not plot any figure.
 The required unit of the answer is {unit}.
