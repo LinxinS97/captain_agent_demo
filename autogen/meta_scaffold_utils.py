@@ -79,7 +79,7 @@ class MetaPromptingScaffolding:
             entire_message_log = prompt_or_messages.copy()
 
             while True:
-                entire_message_log[-1]["content"] = f"ROUND {counter+1}:\n\n{entire_message_log[-1]['content']}"
+                entire_message_log[-1]["content"] = f"\n==> ROUND {counter+1}:\n\n{entire_message_log[-1]['content']}"
 
                 if counter == 14:
                     entire_message_log[-1]["content"] += "This is the last round; so, please present your final answer."
@@ -98,11 +98,12 @@ class MetaPromptingScaffolding:
                 entire_message_log.append({"role": "assistant", "content": meta_model_output})
                 print(
                     colored(
-                        f"ROUND {counter} Meta model output:\n",
+                        f"==> ROUND {counter} Meta model output:\n",
                         "yellow",
-                    )
+                    ),
+                    flush=True
                 )
-                print(meta_model_output)
+                print(meta_model_output, flush=True)
 
                 # Check if the meta_model_output contains a text of the form "Expert XYZ:\n" (where XYZ is an alphabanumeric string).
 
@@ -174,9 +175,10 @@ class MetaPromptingScaffolding:
                                 colored(
                                     f"\nResponse from {model_name}:\n",
                                     "yellow",
-                                )
+                                ),
+                                flush=True
                             )
-                            print(expert_reply)
+                            print(expert_reply, flush=True)
 
                             intermediate_output = f"{model_name}'s output:\n{self.triple_quotes}\n{expert_reply}\n{self.triple_quotes}".strip()
 
@@ -228,13 +230,13 @@ class MetaPromptingScaffolding:
                     )
 
         except Exception as e:
-            print(f"Houston, we have a problem in meta_model_generate: {e}")
+            print(f"Houston, we have a problem in meta_model_generate: {e}", flush=True)
 
             # If we have tried 7 times, then let's return the current prompt or messages.
             if trial_num == 7:
                 return prompt_or_messages
 
-            print("Waiting for 1-10 seconds...")
+            print("Waiting for 1-10 seconds...", flush=True)
             # Let's wait for 1-10 seconds before trying again.
             time.sleep(random.randint(1, 10))
             return self.meta_model_generate(

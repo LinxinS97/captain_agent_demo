@@ -24,6 +24,7 @@ build/
 develop-eggs/
 dist/
 downloads/
+Downloads/
 eggs/
 .eggs/
 lib/
@@ -178,8 +179,7 @@ test/agentchat/test_agent_scripts/*
 
 # test cache
 .cache_test
-.db
-
 
 notebook/result.png
-samples/apps/autogen-studio/autogenstudio/models/test/
+Results/
+Saved_agents/
