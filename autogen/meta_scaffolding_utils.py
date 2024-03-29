@@ -6,12 +6,13 @@ from subprocess import Popen, PIPE, TimeoutExpired
 import tempfile
 import time
 import retry
+import warnings
 
 from autogen import OpenAIWrapper
 from autogen.code_utils import execute_code, extract_code
 
 # Import the typing library for type hints
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Literal
 
 try:
     from termcolor import colored
@@ -34,10 +35,21 @@ class MetaPromptingScaffolding:
         expert_python_message: str,
         intermediate_feedback: str,
         fresh_eyes: bool = True,
+        code_execution_config: Union[Dict, Literal[False]] = False,
         include_expert_name_in_instruction: bool = True,
         extract_output: bool = False,
         use_zero_shot_cot_in_expert_messages: bool = False,
     ) -> None:
+        if code_execution_config is False:
+            self.code_execution_config = {"work_dir": "coding", "use_docker": False, "timeout": 180}
+            warnings.warn("Code execution config is not provided. Using default config.")
+        else:
+            self.code_execution_config = {
+                "work_dir": code_execution_config.get("work_dir", "coding"),
+                "use_docker": code_execution_config.get("use_docker", False),
+                "timeout": code_execution_config.get("timeout", 180),
+            }
+
         # Set the language model
         self.client = client
         self.llm_config = llm_config
@@ -82,8 +94,6 @@ class MetaPromptingScaffolding:
             # Note: Please feel free to change the number of rounds as you see fit.
             if counter == 16:
                 return prompt_or_messages
-
-            # TODO(msuzgun)[improvement]: In the future, if the total content is to long, we can use the summarizer to summarize the whole content.
 
             entire_message_log = prompt_or_messages.copy()
 
@@ -196,7 +206,13 @@ class MetaPromptingScaffolding:
                                         lang, code = code_block
                                         # By default, the language is python
                                         # TODO: Add code execution config
-                                        exitcode, logs, _ = execute_code(code, lang="python", use_docker=False)
+                                        exitcode, logs, _ = execute_code(
+                                            code,
+                                            timeout=self.code_execution_config["timeout"],
+                                            work_dir=self.code_execution_config["work_dir"],
+                                            use_docker=self.code_execution_config["use_docker"],
+                                            lang="python",
+                                        )
                                         logs_all += "\n" + logs
                                         code_texts.append(code)
                                     model_output += f"Here is the output of the code when executed:\n\n{logs_all}"
