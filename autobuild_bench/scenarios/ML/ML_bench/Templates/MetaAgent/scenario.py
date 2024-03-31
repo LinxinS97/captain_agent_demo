@@ -1,3 +1,4 @@
+import json
 import autogen
 import testbed_utils
 from autogen.agentchat.contrib.meta_agent import MetaAgent
@@ -9,15 +10,22 @@ PROBLEM = ""
 with open("prompt.txt", "rt") as fh:
     PROBLEM = fh.read()
 
+README = ""
+with open("readme.txt", "rt") as fh:
+    README = fh.read()
+
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
+    ANSWER = json.loads(ANSWER)
 
 
 ####################
 # Task parameters
 general_llm_config = {
-    "temperature": 0,
+    "temperature": 1,
+    "top_p": 0.95,
+    "max_tokens": 1500,
     "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106"]}),
 }
 nested_mode_config = {
@@ -32,31 +40,40 @@ nested_mode_config = {
             "top_p": 0.95,
             "max_tokens": 1500,
         },
-        "coding": True
+        "coding": False
     },
     "group_chat_config": {"max_round": 15},
     "group_chat_llm_config": general_llm_config.copy(),
 }
 ## build agents
-meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config, nested_mode="autobuild")
+meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config.copy(), nested_mode="autobuild")
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
-    code_execution_config={
-        "use_docker": False,
-    },
+    code_execution_config=False,
+    agent_config_save_path="/Users/elpis/llm/autogen-autobuild-dev/autobuild_bench/scenarios/ML/ML_Bench/Saved_agents"
 )
 
 ## Run task
-question = """Please solve the following math problem: 
+question = """# README
+{readme}
+
+# User instruction
 {problem}
-Try to approximate by python instead of exact solutions for some problems that may be difficult to calculate. 
-The following python packages are pre-installed: sympy numpy scipy
-Do not plot or let the expert plot any figure.
-After verification, reply with the final answer in \\box{{}}."""
+
+# Task instruction
+- You need to consider the README carefully and write a python bash script to fulfill the user's need, taking care of the arguments in the script to match the user's instruction.
+- You cannot run the python bash script or python code and testing them will have no feedbacks but only errors.
+- You don't need to verify the answer.
+- Your final answer should be a single line python bash script.
+- Do not suggest any code or scripts in ```...``` format. This will causes errors.
+
+# Output format
+>>> python YOUR ANSWER"""
+
 meta_user_proxy.initiate_chat(
     meta_agent,
-    message=question.format(problem=PROBLEM)
+    message=question.format(problem=PROBLEM, readme=README)
 )
 
 ## collect response
@@ -80,19 +97,22 @@ for msg in messages:
 # ---------between "answer_checker" and "checker_proxy"---------
 # define answer checker chat
 
-check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to verify the answer.
+check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to compare the reply and answer.
 You are given:
-    1. A problem.
-    2. A reply with the answer to the problem.
-    3. A ground truth answer.
+    1. A user instruction.
+    2. A reply with the python bash script to the problem.
+    3. Ground truth arguments for the script.
 Please do the following:
-1. Extract the answer in the reply: "The answer is <answer extracted>".
-2. Check whether the answer in the reply matches the ground truth answer. When comparison is not obvious (for example, 3*\\sqrt(6) and 7.348), you may write code to check the answer and wait for the user to execute the code.
+1. Extract the python bash script in the reply: "The extracted python bash script is <answer extracted>".
+2. Check whether the python bash script in the reply matches the ground truth python bash script. 
+    - You need to carefully compare the arguments in the reply and answer. 
+    - Additional arguments in the reply is allowed. But the arguments exist in the ground truth should be the same as in the reply.
 3. After everything is done, please choose a reply from the following options:
     - "The answer is correct."
     - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
-    - "The reply doesn't contain an answer." """
+    - "The reply doesn't contain an answer." 
+"""
 
 answer_checker = autogen.AssistantAgent(
     name="checker",
@@ -117,7 +137,8 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "[Problem]: " + PROBLEM + f"\n[Reply]: {response_with_ans}\n\n[Ground truth answer]: " + ANSWER
+answer = f"{' '.join([f'--{key} {value}' for key, value in ANSWER.items()])}"
+message_to_check = "[Problem]: " + PROBLEM + f"\n[Reply]: {response_with_ans}\n\n[Ground truth arguments]: " + answer
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 

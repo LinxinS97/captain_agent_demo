@@ -25,7 +25,6 @@ REDUCED_SET = [
     "HumanEval/2",
     "HumanEval/26",
     "HumanEval/32",
-    "HumanEval/33",
     "HumanEval/36",
     "HumanEval/38",
     "HumanEval/41",
@@ -96,7 +95,10 @@ def create_jsonl(name, tasks, template, agent_list = None):
                         "__SELECTION_METHOD__": "auto",
                     },
                     "prompt.txt": {"__PROMPT__": task["prompt"]},
-                    "coding/my_tests.py": {"__TEST__": task["test"]},
+                    "coding/my_tests.py": {
+                        "__TEST__": task["test"],
+                        "__PROMPT__": task["prompt"]
+                    },
                     "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)}
                 },
             }
@@ -110,7 +112,7 @@ def main():
     reduced_human_eval = [t for t in human_eval if t["task_id"] in REDUCED_SET]
 
     building_task = """We need a group of programming experts to tackle a variety of complex tasks. 
-These tasks involve understanding function signatures, docstrings, and bodies, and passing several unit tests.
+These tasks involve understanding function signatures, docstrings, and bodies.
 They need to solve the problem collaboratively and check each other's answer. Also, they can write python code themselves to help solving the task if needed.
 """
 
@@ -118,6 +120,13 @@ They need to solve the problem collaboratively and check each other's answer. Al
         "temperature": 1,
         "top_p": 0.95,
         "max_tokens": 1024,
+    }
+
+    code_execution_config = {
+        "last_n_messages": 2,
+        "work_dir": "coding",
+        "use_docker": False,
+        "timeout": 10,
     }
 
     templates = {
@@ -130,10 +139,13 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     # build agents
     builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
-                           builder_model='gpt-4-1106-preview', # you can modify the model
-                           agent_model='gpt-4-1106-preview',
+                           builder_model='gpt-4-1106',  # you can modify the model
+                           agent_model='gpt-4-1106',
                            max_agents=10)
-    _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
+    _, agent_configs = builder.build(building_task,
+                                     default_llm_config,
+                                     code_execution_config=code_execution_config,
+                                     coding=True)
     builder.save(f"{SAVE_DIR}/autobuild.json")
 
     # Create the various combinations of [models] x [templates]

@@ -40,7 +40,6 @@ user_proxy = autogen.UserProxyAgent(
         "use_docker": False,
     },
     max_consecutive_auto_reply=10,
-    default_auto_reply="TERMINATE",
 )
 
 user_proxy.initiate_chat(assistant, message=question.format(problem=PROMPT))

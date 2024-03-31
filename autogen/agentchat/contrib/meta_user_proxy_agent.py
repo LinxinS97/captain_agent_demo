@@ -4,6 +4,7 @@ import hashlib
 from .agent_builder import AgentBuilder
 from typing import Callable, Dict, List, Literal, Optional, Union
 from autogen.agentchat.conversable_agent import ConversableAgent
+from llmlingua import PromptCompressor
 
 
 def check_nested_mode_config(nested_mode_config: Dict):
@@ -24,12 +25,22 @@ def check_nested_mode_config(nested_mode_config: Dict):
 class MetaUserProxyAgent(ConversableAgent):
     """(In preview) A proxy agent for the meta agent, that can execute code and provide feedback to the other agents."""
 
-    SUMMARY_PROMPT = """
-Briefly summarize the conversation history derive from a group chat.
-You should highlight the reasoning process and the conclusion they made.
+    SUMMARY_PROMPT = """Briefly summarize the conversation history derive from a experts' group chat.
+You should highlight the reasoning process and output exactly the same result at the final.
+If experts in conversation suggest some code finally, you should additionally output the code block without any modification.
 
 Conversation history:
 {chat_history}
+"""
+
+    AUTOBUILD_TASK_DESC = """You are given: (1) a task and advises from your manager with a specific plan and (2) a general task.
+Collect information from the general task, follow the plan from manager to solve the task from manager.
+
+# General Task
+{general_task}
+
+# Task and advises from manager
+{manager_task}
 """
 
     DEFAULT_AUTO_REPLY = "Thank you. Please keep solving the problem. If you think the problem is solved, please reply me only with 'TERMINATE'."
@@ -46,6 +57,7 @@ Conversation history:
         name: str,
         nested_mode_config: Dict,
         agent_config_save_path: str = None,
+        use_lingua: bool = False,
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
         human_input_mode: Optional[str] = "NEVER",
@@ -119,7 +131,7 @@ Conversation history:
         )
         self.register_function(
             function_map={
-                "autobuild": lambda **args: self._run_autobuild(**args),
+                "autobuild": lambda **args: self._run_autobuild(use_lingua=use_lingua, **args),
                 "autobuild_by_name": lambda **args: self._run_autobuild(**args),
                 "meta_prompting": lambda **args: self._run_meta_prompting(**args),
             }
@@ -127,18 +139,18 @@ Conversation history:
         check_nested_mode_config(nested_mode_config)
         self._agent_config_save_path = agent_config_save_path
         self._nested_mode_config = nested_mode_config.copy()
-        self._code_execution_config = code_execution_config.copy()
+        self._code_execution_config = code_execution_config
         self.build_history = {}
 
-    def _run_autobuild(self, group_name: str, execution_task: str, building_task: str = "") -> str:
+    def _run_autobuild(self, group_name: str, execution_task: str, building_task: str = "", use_lingua=False) -> str:
         """
         Build a group of agents by AutoBuild to solve the task.
         This function requires the nested_mode_config to contain the autobuild_init_config,
             autobuild_llm_config, group_chat_llm_config.
         """
         print("==> Running AutoBuild...", flush=True)
-        print("==> Building task: ", building_task, flush=True)
-        print("==> Execution task: ", execution_task, flush=True)
+        print("\n==> Building task: ", building_task, flush=True)
+        print("\n==> Execution task: ", execution_task, flush=True)
 
         builder = AgentBuilder(**self._nested_mode_config["autobuild_init_config"])
         if group_name in self.build_history.keys():
@@ -156,39 +168,57 @@ Conversation history:
 
         # start nested chat
         nested_group_chat = autogen.GroupChat(
-            agents=agent_list, messages=[], **self._nested_mode_config["group_chat_config"]
+            agents=agent_list,
+            messages=[],
+            allow_repeat_speaker=agent_list[1:] if agent_configs['coding'] is True else agent_list,
+            **self._nested_mode_config["group_chat_config"]
         )
         manager = autogen.GroupChatManager(
             groupchat=nested_group_chat, llm_config=self._nested_mode_config["group_chat_llm_config"]
         )
-        agent_list[0].initiate_chat(manager, message=execution_task)
-
+        key = list(self.chat_messages.keys())[0]
+        general_task = self.chat_messages[key][0]['content']
+        agent_list[0].initiate_chat(
+            manager,
+            message=self.AUTOBUILD_TASK_DESC.format(general_task=general_task, manager_task=execution_task)
+        )
         chat_history = []
         key = list(agent_list[0].chat_messages.keys())[0]
         chat_messages = agent_list[0].chat_messages[key]
         for item in chat_messages:
             chat_history.append(item)
 
-        # Summarize the group chat history, we use builder model to summarize the conversation history.
-        summary_model_config_list = autogen.config_list_from_json(
-            builder.config_file_or_env,
-            file_location=builder.config_file_location,
-            filter_dict={"model": [builder.builder_model]},
-        )
-        summary_model = autogen.OpenAIWrapper(config_list=summary_model_config_list)
-        summarized_history = (
-            summary_model.create(
-                messages=[
-                    {
-                        "role": "user",
-                        "content": self.SUMMARY_PROMPT.format(chat_history=chat_history),
-                    }
-                ]
+        if use_lingua:
+            llm_lingua = PromptCompressor(
+                model_name="microsoft/phi-2",
+                use_llmlingua2=True,  # Whether to use llmlingua-2
             )
-            .choices[0]
-            .message.content
-        )
-        return summarized_history
+            compressed_prompt = llm_lingua.compress_prompt(
+                [json.dumps(chat_history, indent=4)],
+                instruction="", question="", target_token=200
+            )
+            summarized_history = compressed_prompt['compressed_prompt']
+        else:
+            # Summarize the group chat history, we use builder model to summarize the conversation history.
+            summary_model_config_list = autogen.config_list_from_json(
+                builder.config_file_or_env,
+                file_location=builder.config_file_location,
+                filter_dict={"model": [builder.builder_model]},
+            )
+            summary_model = autogen.OpenAIWrapper(config_list=summary_model_config_list)
+            summarized_history = (
+                summary_model.create(
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": self.SUMMARY_PROMPT.format(chat_history=chat_history),
+                        }
+                    ]
+                )
+                .choices[0]
+                .message.content
+            )
+        return f"Response from autobuild: \n{summarized_history}"
 
     def _run_meta_prompting(self, expert_name: str, expert_identity: str, task: str) -> str:
         """

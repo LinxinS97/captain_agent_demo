@@ -24,6 +24,7 @@ build/
 develop-eggs/
 dist/
 downloads/
+Downloads/
 eggs/
 .eggs/
 lib/
@@ -181,3 +182,4 @@ test/agentchat/test_agent_scripts/*
 
 notebook/result.png
 Results/
+Saved_agents/

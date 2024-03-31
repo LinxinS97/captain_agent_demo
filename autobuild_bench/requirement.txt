@@ -1,3 +1,4 @@
 -e file:///Users/elpis/llm/autogen-autobuild-dev
 huggingface_hub
 retry
+llmlingua

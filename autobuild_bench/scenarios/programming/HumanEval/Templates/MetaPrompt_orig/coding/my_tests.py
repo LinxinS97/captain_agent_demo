@@ -1,5 +1,6 @@
 # Disable ruff linter for template files
 # ruff: noqa: F821 E722
+__PROMPT__
 
 __TEST__
 
