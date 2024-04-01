@@ -17,6 +17,7 @@ SCRIPT_PATH = os.path.realpath(__file__)
 SCRIPT_NAME = os.path.basename(SCRIPT_PATH)
 SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
 
+TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
 SCENARIO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 

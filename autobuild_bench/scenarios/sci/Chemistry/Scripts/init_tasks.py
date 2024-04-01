@@ -18,7 +18,7 @@ SCENARIO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
 TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
 TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
-DOWNLOADS_DIR = SCENARIO_DIR.pardir.join('Downloads')
+DOWNLOADS_DIR = os.path.join(SCENARIO_DIR.pardir, 'Downloads')
 
 
 SELECTED_CHEM_PROBLEMS = [

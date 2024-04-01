@@ -19,7 +19,7 @@ echo "Yes" | autogenbench run Tasks/da_SingleLLM.jsonl --native -s 1
 wait
 
 echo "*********************MATH*********************"
-cd ../math/MATH
+cd ../../math/MATH
 python Scripts/init_tasks.py
 wait
 echo "*********************MATH/MetaPrompt_autogen*********************"
@@ -39,7 +39,7 @@ echo "Yes" | autogenbench run Tasks/math_SingleLLM.jsonl --native -s 1
 wait
 
 echo "*********************HumanEval*********************"
-cd ../programming/HumanEval
+cd ../../programming/HumanEval
 python Scripts/init_tasks.py
 wait
 echo "*********************HumanEval/MetaPrompt_autogen*********************"
@@ -59,7 +59,7 @@ echo "Yes" | autogenbench run Tasks/human_eval_SingleLLM.jsonl --native -s 1
 wait
 
 echo "*********************SciBench/Chem*********************"
-cd ../sci/Chemistry
+cd ../../sci/Chemistry
 python Scripts/init_tasks.py
 wait
 echo "*********************HumanEval/MetaPrompt_autogen*********************"
@@ -79,7 +79,7 @@ echo "Yes" | autogenbench run Tasks/sci_chem_SingleLLM.jsonl --native -s 1
 wait
 
 echo "*********************SciBench/Phy*********************"
-cd ../sci/Physics
+cd ../../sci/Physics
 python Scripts/init_tasks.py
 wait
 echo "*********************HumanEval/MetaPrompt_autogen*********************"
