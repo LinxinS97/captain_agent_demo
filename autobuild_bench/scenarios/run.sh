@@ -2,9 +2,6 @@ echo "*********************DA-Bench*********************"
 cd DA/DA-bench
 python Scripts/init_tasks.py
 wait
-echo "*********************DA-Bench/MetaPrompt_orig*********************"
-echo "Yes" | autogenbench run Tasks/da_MetaPrompt_orig.jsonl --native -s 1
-wait
 echo "*********************DA-Bench/MetaPrompt_autogen*********************"
 echo "Yes" | autogenbench run Tasks/da_MetaPrompt_autogen.jsonl --native -s 1
 wait
@@ -24,9 +21,6 @@ wait
 echo "*********************MATH*********************"
 cd ../math/MATH
 python Scripts/init_tasks.py
-wait
-echo "*********************MATH/MetaPrompt_orig*********************"
-echo "Yes" | autogenbench run Tasks/math_MetaPrompt_orig.jsonl --native -s 1
 wait
 echo "*********************MATH/MetaPrompt_autogen*********************"
 echo "Yes" | autogenbench run Tasks/math_MetaPrompt_autogen.jsonl --native -s 1
@@ -48,9 +42,6 @@ echo "*********************HumanEval*********************"
 cd ../programming/HumanEval
 python Scripts/init_tasks.py
 wait
-echo "*********************HumanEval/MetaPrompt_orig*********************"
-echo "Yes" | autogenbench run Tasks/human_eval_MetaPrompt_orig.jsonl --native -s 1
-wait
 echo "*********************HumanEval/MetaPrompt_autogen*********************"
 echo "Yes" | autogenbench run Tasks/human_eval_MetaPrompt_autogen.jsonl --native -s 1
 wait
@@ -71,9 +62,6 @@ echo "*********************SciBench/Chem*********************"
 cd ../sci/Chemistry
 python Scripts/init_tasks.py
 wait
-echo "*********************HumanEval/MetaPrompt_orig*********************"
-echo "Yes" | autogenbench run Tasks/sci_chem_MetaPrompt_orig.jsonl --native -s 1
-wait
 echo "*********************HumanEval/MetaPrompt_autogen*********************"
 echo "Yes" | autogenbench run Tasks/sci_chem_MetaPrompt_autogen.jsonl --native -s 1
 wait
@@ -93,9 +81,6 @@ wait
 echo "*********************SciBench/Phy*********************"
 cd ../sci/Physics
 python Scripts/init_tasks.py
-wait
-echo "*********************HumanEval/MetaPrompt_orig*********************"
-echo "Yes" | autogenbench run Tasks/sci_phy_MetaPrompt_orig.jsonl --native -s 1
 wait
 echo "*********************HumanEval/MetaPrompt_autogen*********************"
 echo "Yes" | autogenbench run Tasks/sci_phy_MetaPrompt_autogen.jsonl --native -s 1

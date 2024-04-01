@@ -63,6 +63,7 @@ def create_jsonl(name, problems, template, agent_list=None):
                     "format.txt": {"__FORMAT__": problem["format"]},
                     "question.txt": {"__QUESTION__": problem["question"]},
                     "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
+                    "scenario.py": {"__AGENT_SAVE_PATH__": SAVE_DIR}
                 },
             }
             fh.write(json.dumps(record).strip() + "\n")

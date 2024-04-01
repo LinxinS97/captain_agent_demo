@@ -66,7 +66,7 @@ meta_user_proxy = MetaUserProxyAgent(
         "work_dir": "coding",
         "last_n_messages": 1
     },
-    agent_config_save_path="/Users/elpis/llm/autogen-autobuild-dev/autobuild_bench/scenarios/DA/DA-bench/Saved_agents"
+    agent_config_save_path="__AGENT_SAVE_PATH__"
 )
 
 ## Run task

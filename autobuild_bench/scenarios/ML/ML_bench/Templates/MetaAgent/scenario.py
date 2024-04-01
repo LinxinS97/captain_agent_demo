@@ -51,7 +51,7 @@ meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
     code_execution_config=False,
-    agent_config_save_path="/Users/elpis/llm/autogen-autobuild-dev/autobuild_bench/scenarios/ML/ML_Bench/Saved_agents"
+    agent_config_save_path="__AGENT_SAVE_PATH__"
 )
 
 ## Run task

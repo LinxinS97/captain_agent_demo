@@ -97,6 +97,7 @@ def create_jsonl(name, problems, template, agent_list = None):
                     "prompt.txt": {"__PROMPT__": data["problem"]},
                     "expected_answer.txt": {"__ANSWER__": data["solution"]},
                     "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
+                    "scenario.py": {"__AGENT_SAVE_PATH__": SAVE_DIR}
                 },
             }
 

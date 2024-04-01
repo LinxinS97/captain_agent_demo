@@ -63,7 +63,7 @@ meta_user_proxy = MetaUserProxyAgent(
     nested_mode_config=nested_mode_config,
     code_execution_config={"use_docker": False}, # you can modify the setting
     # modify the path
-    agent_config_save_path="/mnt/disks/data_disk/wsj/autogen-autobuild-dev/autobuild_bench/scenarios/retrieval/GAIA/Saved_agents"
+    agent_config_save_path="__AGENT_SAVE_PATH__"
 )
 
 ## Run task

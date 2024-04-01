@@ -84,6 +84,7 @@ def create_jsonl(name, dataset, template, agent_list=None, readme_cache=None):
                     "readme.txt": {"__README__": data["oracle_segmet"]},
                     "expected_answer.txt": {"__ANSWER__": json.dumps(data["arguments"])},
                     "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
+                    "scenario.py": {"__AGENT_SAVE_PATH__": SAVE_DIR}
                 },
             }
 

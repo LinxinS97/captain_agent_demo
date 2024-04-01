@@ -62,6 +62,7 @@ def create_jsonl(name, tasks, files_dir, template, agent_list = None):
                     "scenario.py": {
                         "__FILE_NAME__": task["file_name"],
                         "__PROMPT__": task["Question"],
+                        "__AGENT_SAVE_PATH__": SAVE_DIR
                     },
                     "expected_answer.txt": {"__EXPECTED_ANSWER__": task["Final answer"]},
                     "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)}

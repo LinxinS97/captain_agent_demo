@@ -40,6 +40,10 @@ meta_prompt_agent = MetaPromptAgent(
     name="Metaprompt Agent",
     llm_config=llm_config,
     is_termination_msg=lambda x: x.get("content", "").find("TERMINATE") >= 0,
+    code_execution_config={
+        "work_dir": work_dir,
+        "use_docker": False,
+    },
 )
 
 user_proxy.initiate_chat(

@@ -93,6 +93,7 @@ def create_jsonl(name, tasks, template, agent_list = None):
                     "scenario.py": {
                         "__ENTRY_POINT__": task["entry_point"],
                         "__SELECTION_METHOD__": "auto",
+                        "__AGENT_SAVE_PATH__": SAVE_DIR
                     },
                     "prompt.txt": {"__PROMPT__": task["prompt"]},
                     "coding/my_tests.py": {
