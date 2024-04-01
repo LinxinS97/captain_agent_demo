@@ -58,7 +58,7 @@ def create_jsonl(name, problems, template, agent_list=None):
                 "template": os.path.join(os.path.pardir, template),
                 "substitutions": {
                     "constraint.txt": {"__CONSTRAINT__": problem["constraints"]},
-                    "data.csv": {"__CSV__": open("../Downloads/da-dev-tables/" + problem["file_name"]).read()},
+                    "data.csv": {"__CSV__": open(os.path.join(DATA_DIR, "da-dev-tables", problem["file_name"])).read()},
                     "expected_answer.txt": {"__ANSWER__": answer},
                     "format.txt": {"__FORMAT__": problem["format"]},
                     "question.txt": {"__QUESTION__": problem["question"]},

@@ -34,40 +34,51 @@ class AgentBuilder:
 
     online_server_name = "online"
 
-    DEFAULT_SYSTEM_MESSAGE = """# Your role
-A helpful AI assistant.
+    DEFAULT_PROXY_AUTO_REPLY = 'There is no code for me to execute. Let other participants to continue the conversation. If you want to end the conversation, you should reply me only with "TERMINATE"'
 
-# Task and skill instructions
-Solve tasks using your coding and language skills.
+    GROUP_CHAT_DESCRIPTION = """ # Group chat instruction
+You are now working in a group chat with different expert and a group chat manager.
 
-## When to use code?
-- When you need to collect info, use the code to output the info you need, for example, browse or search the web, download/read a file, print the content of a webpage or a file, get the current date/time, check the operating system. After sufficient info is printed and the task is ready to be solved based on your language skill, you can solve the task by yourself.
-- When you need to perform some task with code, use the code to perform the task and output the result. Finish the task smartly.
+Your name is: {name}
+The members' name: {members}{user_proxy_desc}
 
+The group chat manager will select the speaker who can speak at the current time, but if there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
+When the task is complete and the result has been carefully verified, after obtaining agreement from the other members, you can end the conversation by replying only with "TERMINATE".
+
+# Your profile
+{sys_msg}
+"""
+
+    DEFAULT_DESCRIPTION = """## Your role
+Complete this part with expert's name and skill description
+
+## Task and skill instructions
+- Task description
+- Skill description
+- (Optional) Other information
+"""
+
+    CODING_AND_TASK_SKILL_INSTRUCTION = """## Useful instructions for task-solving
+- Follow the instruction provided by the user.
+- Solve the task step by step if you need to.
+- If a plan is not provided, explain your plan first.
+- If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
+- When you find an answer, verify the answer carefully. 
+- Include verifiable evidence in your response if possible.
+    
 ## How to use code?
 - Suggest python code (in a python coding block) or shell script (in a sh coding block) for the Computer_terminal to execute.
 - When using code, you must indicate the script type in the code block.
 - Do not suggest incomplete code which requires users to modify.
+- Last results will not be cached, so you need to provide all the necessary information in one code block.
 - Do not use a code block if it's not intended to be executed by the Computer_terminal.
 - The Computer_terminal cannot provide any other feedback or perform any other action beyond executing the code you suggest. 
 - The Computer_terminal can't modify your code.
 - Use 'print' function for the output when relevant. 
 - Check the execution result returned by the user.
 - Do not ask users to copy and paste the result.
-
-## How to save your code?
-- If you want the Computer_terminal to save the code in a file before executing it, put # filename: <filename> inside the code block as the first line. 
-
-# How to solve a task?
-- Solve the task step by step if you need to. 
-- If a plan is not provided, explain your plan first. 
-- Be clear which step uses code, and which step uses your language skill.
 - If the result indicates there is an error, fix the error and output the code again. 
-- If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
-- When you find an answer, verify the answer carefully. 
-- Include verifiable evidence in your response if possible."""
-
-    DEFAULT_PROXY_AUTO_REPLY = 'There is no code for me to execute. Let other participants to continue the conversation. If you want to end the conversation, you should reply me only with "TERMINATE"'
+- If you want the Computer_terminal to save the code in a file before executing it, put # filename: <filename> inside the code block as the first line. """
 
     CODING_PROMPT = """Does the following task need programming (i.e., access external API or tool by coding) to solve,
 or coding may help the following task become easier?
@@ -78,20 +89,19 @@ Answer only YES or NO.
 """
 
     AGENT_NAME_PROMPT = """# Your task
-Suggest less then {max_agents} experts with their name to complete the following task.
+Suggest less then {max_agents} experts with their name according to the following user requirement.
 
-# task
+## User requirement
 {task}
 
 # Task requirement
-- When some possible experts in the task, take that experts as your reply without any modification.
-- Generated experts' name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
-- Only reply the names of the experts, separated names by ","."""
+- Expert's name should follow the format: [skill]_Expert.
+- Only reply the names of the experts, separated by ",". 
+For example: Python_Expert, Math_Expert, ... """
 
     AGENT_SYS_MSG_PROMPT = """# Your goal
-- For the following TASK, write a high-quality description for the experts by modifying the DEFAULT DESCRIPTION.
+- According to the task and expert name, write a high-quality description for the expert by completing the "default description."
 - Ensure that your instructions are clear and unambiguous, and include all necessary information.
-- Experts need programming at a proper time when solving programmatic/math/logic/complex tasks.
 
 # Task
 {task}
@@ -99,10 +109,8 @@ Suggest less then {max_agents} experts with their name to complete the following
 # Expert name
 {position}
 
-# DEFAULT DESCRIPTION (filled in [[...]])
-[[
+# Default description
 {default_sys_msg}
-]]
 """
 
     AGENT_DESCRIPTION_PROMPT = """# Your goal
@@ -111,10 +119,8 @@ Summarize the following expert's description in a sentence.
 # EXPERT NAME
 {position}
 
-# EXPERT DESCRIPTION (filled in [[...]])
-[[
+# EXPERT DESCRIPTION
 {sys_msg}
-]]
 """
 
     AGENT_SEARCHING_PROMPT = """# Your goal
@@ -196,7 +202,7 @@ Considering the following task, what experts should be involved to the task?
         agent_name: str,
         model_name_or_hf_repo: str,
         llm_config: dict,
-        system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,
+        system_message: str,
         description: Optional[str] = autogen.AssistantAgent.DEFAULT_DESCRIPTION,
         use_oai_assistant: Optional[bool] = False,
         world_size: Optional[int] = 1,
@@ -428,7 +434,7 @@ Considering the following task, what experts should be involved to the task?
                             "content": self.AGENT_SYS_MSG_PROMPT.format(
                                 task=building_task,
                                 position=name,
-                                default_sys_msg=self.DEFAULT_SYSTEM_MESSAGE,
+                                default_sys_msg=self.DEFAULT_DESCRIPTION,
                             ),
                         }
                     ]
@@ -436,7 +442,7 @@ Considering the following task, what experts should be involved to the task?
                 .choices[0]
                 .message.content
             )
-            agent_sys_msg_list.append(resp_agent_sys_msg)
+            agent_sys_msg_list.append(f"{resp_agent_sys_msg}\n\n{self.CODING_AND_TASK_SKILL_INSTRUCTION}")
 
         print(colored("==> Generating description...", "green"), flush=True)
         agent_description_list = []
@@ -461,14 +467,9 @@ Considering the following task, what experts should be involved to the task?
             user_proxy_desc = f"\nThe group also include a role called Computer_terminal to help you run the python code and bash script."
 
         for name, sys_msg, description in list(zip(agent_name_list, agent_sys_msg_list, agent_description_list)):
-            enhanced_sys_msg = """You are now working in a group chat with different expert and a group chat manager.
-Here is the members' name: {members}{user_proxy_desc}
-Your name is: {name}.
-The group chat manager will select the speaker who can speak at the current time, but if there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
-When the task is complete and the result has been carefully verified, after agreement of the other members, you can end the conversation by replying only with "TERMINATE".
-Here is your profile: """
-            enhanced_sys_msg = enhanced_sys_msg.format(name=name, members=agent_name_list, user_proxy_desc=user_proxy_desc)
-            enhanced_sys_msg += sys_msg
+            enhanced_sys_msg = self.GROUP_CHAT_DESCRIPTION.format(
+                name=name, members=agent_name_list, user_proxy_desc=user_proxy_desc, sys_msg=sys_msg
+            )
             agent_configs.append(
                 {
                     "name": name,
@@ -632,7 +633,7 @@ Here is your profile: """
                             "content": self.AGENT_SYS_MSG_PROMPT.format(
                                 task=building_task,
                                 position=f"{name}\nPOSITION PROFILE: {profile}",
-                                default_sys_msg=self.DEFAULT_SYSTEM_MESSAGE,
+                                default_sys_msg=self.DEFAULT_DESCRIPTION,
                             ),
                         }
                     ]
@@ -640,7 +641,7 @@ Here is your profile: """
                 .choices[0]
                 .message.content
             )
-            agent_sys_msg_list.append(resp_agent_sys_msg)
+            agent_sys_msg_list.append(f"{resp_agent_sys_msg}\n\n{self.CODING_AND_TASK_SKILL_INSTRUCTION}")
 
         if coding is None:
             resp = (
@@ -657,14 +658,9 @@ Here is your profile: """
             user_proxy_desc = f"\nThe group also include a Computer_terminal to help you run the python and shell code."
 
         for name, sys_msg, description in list(zip(agent_name_list, agent_sys_msg_list, agent_profile_list)):
-            enhanced_sys_msg = """You are now working in a group chat with different expert and a group chat manager.
-            The group chat manager cannot speak, but will select the speaker who can speak at the current time.
-            Here is the members' name: {members}{user_proxy_desc}
-            If there is someone you want to talk to, you can use @mention with "I would like to hear the opinion from ...".
-            Reply only with "TERMINATE" to end the conversation when everything is done.
-            Here is your profile: """
-            enhanced_sys_msg = enhanced_sys_msg.format(members=agent_name_list, user_proxy_desc=user_proxy_desc)
-            enhanced_sys_msg += sys_msg
+            enhanced_sys_msg = self.GROUP_CHAT_DESCRIPTION.format(
+                name=name, members=agent_name_list, user_proxy_desc=user_proxy_desc, sys_msg=sys_msg
+            )
             agent_configs.append(
                 {
                     "name": name,

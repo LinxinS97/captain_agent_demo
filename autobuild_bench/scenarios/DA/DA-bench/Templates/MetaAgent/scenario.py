@@ -18,7 +18,7 @@ with open("question.txt", "rt") as fh:
     QUESTION = fh.read()
 
 PROMPT = """Let's solve a data analysis problem. 
-Given an csv file path, you are required to answer a question following a constraint.
+Given an csv file path, you are required to answer a question following a constraint. Do not plot any figure.
 
 FILE PATH: ../data.csv
 

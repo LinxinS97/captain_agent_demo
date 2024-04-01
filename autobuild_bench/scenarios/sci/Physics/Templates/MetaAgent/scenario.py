@@ -47,7 +47,7 @@ meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
     code_execution_config={},
-    agent_config_save_path="/home/kattolab/luo/home/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Physics/Saved_agents"
+    agent_config_save_path="/Users/elpis/llm/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Physics/Saved_agents"
 )
 
 ## Run task
@@ -86,13 +86,13 @@ for msg in messages:
 
 check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to verify the answer.
 You are given:
-    1. A problem.
-    2. A reply with the answer to the problem.
-    3. A ground truth answer.
+    1. A problem (filled in [[...]]).
+    2. A reply with the answer to the problem (filled in [[...]]).
+    3. A ground truth answer (filled in [[...]]).
 Please do the following:
 1. Extract the answer in the reply: "The answer is <answer extracted>".
 2. Check whether the answer in the reply matches the ground truth answer. When comparison is not obvious (for example, 3*\\sqrt(6) and 7.348), you may write code to check the answer and wait for the user to execute the code.
-3. After everything is done, please choose a reply from the following options:
+3. Your reply should be in the following options:
     - "The answer is correct."
     - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
@@ -121,7 +121,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "[Problem]: " + PROBLEM + f"\n[Reply]: {response_with_ans}\n\n[Ground truth answer]: " + ANSWER
+message_to_check = f"Problem: [[{PROBLEM}]]\n\nReply: \n[[{response_with_ans}]]\n\nGround truth answer: \n[[{ANSWER}, unit: {UNIT}]]"
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 

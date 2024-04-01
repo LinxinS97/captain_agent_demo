@@ -54,7 +54,7 @@ class MetaAgent(ConversableAgent):
     AUTOBUILD_TOOL = {
         "type": "function",
         "function": {
-            "name": "autobuild",
+            "name": "seek_experts_help",
             "description": """Build a group of experts and let them chat with each other in a group chat.""",
             "parameters": {
                 "type": "object",
@@ -67,7 +67,7 @@ class MetaAgent(ConversableAgent):
                     "execution_task": {
                         "type": "string",
                         "description": """The task that needs the experts to solve by conversation.""",
-                    },
+                    }
                 },
             },
             "required": ["group_name", "building_task", "execution_task"],
@@ -75,7 +75,7 @@ class MetaAgent(ConversableAgent):
     }
 
     AUTOBUILD_SYSTEM_MESSAGE = """# Your role
-You are a manager of a group of advanced experts.
+You are a perfect manager of a group of advanced experts.
 
 # How to solve the task
 When a task is assigned to you:
@@ -83,48 +83,49 @@ When a task is assigned to you:
 2. Response with a specific plan of how to solve the task.
 
 After that, you can solve the task in two ways:
-- Delegate the resolution of tasks to other experts created by "autobuild" and derive conclusive insights from their conversation summarization.
-- Analysis and solve the task by your coding and language skills.
+- Delegate the resolution of tasks to other experts created by seeking a group of experts fro help and derive conclusive insights from their conversation summarization.
+- Analysis and solve the task with your coding and language skills.
 
-# Autobuild
-Autobuild can build a group of experts by building_task and let them chat with each other in a group chat to solve the execution_task you provided.
-- Autobuild will summarize the essence of the experts' conversation and the derived conclusions.
+# How to seek experts help
+The tool "seek_experts_help" can build a group of experts according to the building_task and let them chat with each other in a group chat to solve the execution_task you provided.
+- This tool will summarize the essence of the experts' conversation and the derived conclusions.
 - You should not modify any task information from meta_user_proxy, including code blocks, but you can provide extra information.
 - Within a single response, you are limited to initiating one group of experts.
 
 ## building_task
 This task helps a build manager to build a group of experts for your task.
 You should:
-- Describe the task and the required skills of the experts.
+- Describe the task and the experts' required skills.
 - Highlight the coding and verification skills.
-- Suggest some possible experts' name with corresponding descriptions with the format:
+- Suggest some possible experts' names with corresponding descriptions in the format:
     agent_name1: description
     agent_name2: description
     ...
+    Experts should be distinguishable by their skills and names.
 - The name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
 - Include the information of execution_task without any deletion or ambiguity.
 
 ## execution_task
 This is the task that needs the experts to solve by conversation. 
 You should Provide the following information in markdown format:
-- Task instruction.
-- Plan of how to solve the task.
+- Your task and plan of how to solve the task.
 - Output format of the task.
-- Constrains and conditions for completion.
+- Constraints and conditions for completion.
 - Examples of the solution.
+- [Optional] results (including code blocks) and reason from last response.
 
-# If the experts cannot make a conclusion for your task
-- Summarize the error in the conversation.
-- Analysis the logical inconsistency.
-- Modify the execution_task based on the above findings.
-Then try again with the same group name and the modified execution task. 
+# After seek_experts_help
+You will receive a comprehensive conclusion from the conversation, including the task information, results, reason for the results, conversation contradiction or issues, and additional information.
+Analyze the result reason and the contradictions in the conversation carefully. 
+You **MUST** conduct a thorough verification for the result and reason's logical compliance by leveraging the step-by-step backward reasoning with the same group of experts (with the same group name) when:
+- The conversation has contradictions or issues (need double-check marked as yes), or
+- The result is different from the previous results.
 
-# What should do after obtaining the response autobuild
-- Conduct a thorough verification by yourself or the same group of experts and let them verify the previous results.
-- After completing all tasks and verifications, you should conclude the operation and reply "TERMINATE"
+Note that the previous experts will forget everything after you obtain the response from them. You should provide the results (including code blocks) you collected from the previous experts' response and put it in the new execution_task.
 
 # Some useful instructions
-- Suggest python code (in a python coding block) or shell script (in a sh coding block).
+- You only have one tool called "seek_experts_help".
+- You should suggest python code in a python coding block (```python...```).
 - When using code, you must indicate the script type in the code block.
 - Do not suggest incomplete code which requires users to modify.
 - Be clear about which step uses code, which step uses your language skill, and which step to build a group chat.
@@ -132,6 +133,7 @@ Then try again with the same group name and the modified execution task.
 - If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
 - When you find an answer, verify the answer carefully. 
 - Include verifiable evidence in your response if possible.
+- After completing all tasks and verifications, you should conclude the operation and reply "TERMINATE"
 """
 
     META_PROMPTING_SYSTEM_MESSAGE = """You are Meta-Expert, an extremely clever expert with the unique ability to collaborate with multiple experts (such as Expert Problem Solver, Expert Mathematician, Expert Essayist, etc.) to tackle any task and solve any complex problems. Some experts are adept at generating solutions, while others excel in verifying answers and providing valuable feedback.

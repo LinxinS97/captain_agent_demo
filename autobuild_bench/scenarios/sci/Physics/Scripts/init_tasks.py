@@ -19,9 +19,7 @@ DOWNLOADS_DIR = os.path.join(SCENARIO_DIR, "Downloads")
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 SELECTED_PHY_PROBLEMS = [
-    "../../Downloads/fund_sol.json",
-    "../../Downloads/thermo_sol.json",
-    "../../Downloads/class_sol.json",
+    "../../Downloads/r_phys.json"
 ]
 
 
@@ -37,8 +35,8 @@ def load_data():
     return selected_problems
 
 
-def create_jsonl(name, problems, template, agent_list=None):
-    """Creates a JSONL scenario file with a given name, dictionary of Physics problems, and template path."""
+def create_jsonl(name, problems, template, agent_list = None):
+    """Creates a JSONL scenario file with a given name, dictionary of Chemistry problems, and template path."""
 
     # Create a task directory if it doesn't exist
     if not os.path.isdir(TASKS_DIR):
@@ -98,10 +96,12 @@ They need to solve the problem collaboratively and check each other's answer. Al
     if os.path.exists(f"{SAVE_DIR}/autobuild.json"):
         agent_configs = json.load(open(f"{SAVE_DIR}/autobuild.json"))
     else:
-        builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
-                            builder_model='gpt-4-1106',
-                            agent_model='gpt-4-1106',
-                            max_agents=10)
+        builder = AgentBuilder(
+            config_file_or_env='OAI_CONFIG_LIST',
+            builder_model='gpt-4-1106',
+            agent_model='gpt-4-1106',
+            max_agents=10
+        )
         _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
 
         if not os.path.isdir(SAVE_DIR):

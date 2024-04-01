@@ -25,12 +25,31 @@ def check_nested_mode_config(nested_mode_config: Dict):
 class MetaUserProxyAgent(ConversableAgent):
     """(In preview) A proxy agent for the meta agent, that can execute code and provide feedback to the other agents."""
 
-    SUMMARY_PROMPT = """Briefly summarize the conversation history derive from a experts' group chat.
-You should highlight the reasoning process and output exactly the same result at the final.
-If experts in conversation suggest some code finally, you should additionally output the code block without any modification.
+    SUMMARY_PROMPT = """# Your task
+Briefly summarize the conversation history derive from a experts' group chat by following the answer format.
+If you found contradictions or issues in the conversation, point it out and mark the "Need double check" as "Yes".
 
-Conversation history:
+# Conversation history:
 {chat_history}
+
+# Answer format
+## Task
+...
+
+## Results
+...
+
+## Reason for the results
+...
+
+## Contradictions or issues in the conversation
+...
+
+### Need double-check?
+[Yes or No]
+
+## Additional information (file path, code blocks, url, etc.)
+...
 """
 
     AUTOBUILD_TASK_DESC = """You are given: (1) a task and advises from your manager with a specific plan and (2) a general task.
@@ -131,8 +150,7 @@ Collect information from the general task, follow the plan from manager to solve
         )
         self.register_function(
             function_map={
-                "autobuild": lambda **args: self._run_autobuild(use_lingua=use_lingua, **args),
-                "autobuild_by_name": lambda **args: self._run_autobuild(**args),
+                "seek_experts_help": lambda **args: self._run_autobuild(use_lingua=use_lingua, **args),
                 "meta_prompting": lambda **args: self._run_meta_prompting(**args),
             }
         )
@@ -141,6 +159,7 @@ Collect information from the general task, follow the plan from manager to solve
         self._nested_mode_config = nested_mode_config.copy()
         self._code_execution_config = code_execution_config
         self.build_history = {}
+        self.build_times = 0
 
     def _run_autobuild(self, group_name: str, execution_task: str, building_task: str = "", use_lingua=False) -> str:
         """
@@ -166,6 +185,7 @@ Collect information from the general task, follow the plan from manager to solve
             with open(f"{self._agent_config_save_path}/build_history_{building_task_md5}.json", "w") as f:
                 json.dump(self.build_history, f)
 
+        self.build_times += 1
         # start nested chat
         nested_group_chat = autogen.GroupChat(
             agents=agent_list,
@@ -218,7 +238,12 @@ Collect information from the general task, follow the plan from manager to solve
                 .choices[0]
                 .message.content
             )
-        return f"Response from autobuild: \n{summarized_history}"
+
+        # first_time_flag = "\n\n[IMPORTANT] This is the FIRST-TIME RESULT, you need to check the result and the reason's logical compliance carefully by a step-by-step backward reasoning." \
+        #     if self.build_times == 1 \
+        #     else ""
+
+        return f"# Response from seek_agent_help: \n{summarized_history}"
 
     def _run_meta_prompting(self, expert_name: str, expert_identity: str, task: str) -> str:
         """

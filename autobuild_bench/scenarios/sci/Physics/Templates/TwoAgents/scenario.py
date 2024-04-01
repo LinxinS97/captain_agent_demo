@@ -69,9 +69,9 @@ for j in range(len(messages) - 1, -1, -1):
 
 check_sys_msg = """You are a helpful AI assistant. You will use your coding and language skills to verify the answer.
 You are given:
-    1. A problem.
-    2. A reply with the answer to the problem.
-    3. A ground truth answer.
+    1. A problem (filled in [[...]]).
+    2. A reply with the answer to the problem (filled in [[...]]).
+    3. A ground truth answer (filled in [[...]]).
 Please do the following:
 1. Extract the answer in the reply: "The answer is <answer extracted>".
 2. Check whether the answer in the reply matches the ground truth answer. When comparison is not obvious (for example, 3*\\sqrt(6) and 7.348), you may write code to check the answer and wait for the user to execute the code.
@@ -100,7 +100,7 @@ checker_proxy = autogen.UserProxyAgent(
     ),
 )
 
-message_to_check = "Problem: " + PROBLEM + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
+message_to_check = f"Problem: [[{PROBLEM}]]\n\nReply: \n[[{response_with_ans}]]\n\nGround truth answer: \n[[{ANSWER}, unit: {UNIT}]]"
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
 
 

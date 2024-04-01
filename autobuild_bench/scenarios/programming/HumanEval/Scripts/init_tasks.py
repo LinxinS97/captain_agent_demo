@@ -129,13 +129,12 @@ They need to solve the problem collaboratively and check each other's answer. Al
         "timeout": 10,
     }
 
-    templates = {
-        "two_agents": "Templates/TwoAgents",
-        "meta_prompt_orig": "Templates/MetaPrompt_orig",
-        "meta_prompt_autogen": "Templates/MetaPrompt_autogen",
-        "autobuild": "Templates/AutoBuild",
-        "meta_agent": "Templates/MetaAgent"
-    }
+    # list all directories in the Templates directory
+    # and populate a dictionary with the name and path
+    templates = {}
+    for entry in os.scandir(TEMPLATES_DIR):
+        if entry.is_dir():
+            templates[re.sub(r"\s", "", entry.name)] = entry.path
 
     # build agents
     builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
