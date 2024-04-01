@@ -94,7 +94,7 @@ class MetaPromptAgent(ConversableAgent):
         name,
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
-        # code_execution_config: Union[Dict, Literal[False]] = False, # For now code execution is not customizable
+        code_execution_config: Union[Dict, Literal[False]] = False,  # For now code execution is not customizable
         llm_config: Optional[Union[Dict, Literal[False]]] = None,
         default_auto_reply: Optional[Union[str, Dict, None]] = "",
     ):
@@ -103,7 +103,7 @@ class MetaPromptAgent(ConversableAgent):
             is_termination_msg=is_termination_msg,
             max_consecutive_auto_reply=max_consecutive_auto_reply,
             human_input_mode="NEVER",
-            # code_execution_config=False,
+            code_execution_config=code_execution_config,
             llm_config=llm_config,
             default_auto_reply=default_auto_reply,
         )
@@ -111,7 +111,6 @@ class MetaPromptAgent(ConversableAgent):
             client=self.client,
             llm_config=llm_config,
             generator_settings=self.generator_settings,
-            # ?
             # summarizer_settings=
             error_message=self.error_message,
             final_answer_indicator=self.final_answer_indicator,

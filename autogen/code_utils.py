@@ -422,14 +422,7 @@ def execute_code(
             f".\\{filename}" if WIN32 else filename,
         ]
         with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(
-                subprocess.run,
-                cmd,
-                cwd=work_dir,
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            )
+            future = executor.submit(subprocess.run, cmd, cwd=work_dir, capture_output=True, text=True, timeout=timeout)
             try:
                 result = future.result(timeout=timeout)
             except TimeoutError:
