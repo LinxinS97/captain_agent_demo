@@ -4,6 +4,8 @@ import subprocess as sp
 import socket
 import json
 import hashlib
+import os
+import importlib
 from termcolor import colored
 from typing import Optional, List, Dict, Tuple
 
@@ -199,11 +201,9 @@ Considering the following task, what experts should be involved to the task?
 
     def _create_agent(
         self,
-        agent_name: str,
-        model_name_or_hf_repo: str,
+        agent_config: Dict,
+        member_name: List[str],
         llm_config: dict,
-        system_message: str,
-        description: Optional[str] = autogen.AssistantAgent.DEFAULT_DESCRIPTION,
         use_oai_assistant: Optional[bool] = False,
         world_size: Optional[int] = 1,
     ) -> autogen.AssistantAgent:
@@ -214,11 +214,12 @@ Considering the following task, what experts should be involved to the task?
         The API address of that endpoint will be "localhost:{free port}".
 
         Args:
-            agent_name: the name that identify the function of the agent (e.g., Coder, Product Manager,...)
-            model_name_or_hf_repo: the name of the model or the huggingface repo.
+            agent_config: agent's config. It should include the following information:
+                1. model_name: backbone model of an agent, e.g., gpt-4-1106-preview, meta/Llama-2-70b-chat
+                2. agent_name: use to identify an agent in the group chat.
+                3. system_message: including persona, task solving instruction, etc.
+                4. description: brief description of an agent that help group chat manager to pick the speaker.
             llm_config: specific configs for LLM (e.g., config_list, seed, temperature, ...).
-            system_message: system prompt use to format an agent's behavior.
-            description: a brief description of the agent. This will improve the group chat performance.
             use_oai_assistant: use OpenAI assistant api instead of self-constructed agent.
             world_size: the max size of parallel tensors (in most of the cases, this is identical to the amount of GPUs).
 
@@ -227,6 +228,14 @@ Considering the following task, what experts should be involved to the task?
         """
         from huggingface_hub import HfApi
         from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
+
+        model_name_or_hf_repo = agent_config['model']
+        agent_name = agent_config['name']
+        system_message = agent_config['system_message']
+        description = agent_config['description']
+
+        # Path to the customize **ConversableAgent** class.
+        model_path = agent_config.get('model_path', None)
 
         config_list = autogen.config_list_from_json(
             self.config_file_or_env,
@@ -319,12 +328,32 @@ Considering the following task, what experts should be involved to the task?
                 overwrite_instructions=False,
             )
         else:
-            agent = autogen.AssistantAgent(
-                name=agent_name,
-                llm_config=current_config.copy(),
-                system_message=system_message,
-                description=description,
+            user_proxy_desc = ""
+            if self.cached_configs['coding'] is True:
+                user_proxy_desc = f"\nThe group also include a Computer_terminal to help you run the python and shell code."
+
+            enhanced_sys_msg = self.GROUP_CHAT_DESCRIPTION.format(
+                name=agent_name, 
+                members=member_name, 
+                user_proxy_desc=user_proxy_desc, 
+                sys_msg=system_message
             )
+            model_class = autogen.AssistantAgent
+            if model_path:
+                module_path, model_class_name = model_path.replace('/').rsplit('.', 1)
+                module = importlib.import_module(module_path)
+                model_class = getattr(module, model_class_name)
+            else:
+                additional_config = {
+                    k: v for k, v in agent_config if k not in ['model', 'name', 'system_message', 'description']
+                }
+                agent = model_class(
+                    name=agent_name,
+                    llm_config=current_config.copy(),
+                    system_message=enhanced_sys_msg,
+                    description=description,
+                    **additional_config
+                )
         self.agent_procs_assign[agent_name] = (agent, server_id)
         return agent
 
@@ -462,19 +491,12 @@ Considering the following task, what experts should be involved to the task?
             )
             agent_description_list.append(resp_agent_description)
 
-        user_proxy_desc = ""
-        if coding is True:
-            user_proxy_desc = f"\nThe group also include a role called Computer_terminal to help you run the python code and bash script."
-
         for name, sys_msg, description in list(zip(agent_name_list, agent_sys_msg_list, agent_description_list)):
-            enhanced_sys_msg = self.GROUP_CHAT_DESCRIPTION.format(
-                name=name, members=agent_name_list, user_proxy_desc=user_proxy_desc, sys_msg=sys_msg
-            )
             agent_configs.append(
                 {
                     "name": name,
                     "model": self.agent_model,
-                    "system_message": enhanced_sys_msg,
+                    "system_message": sys_msg,
                     "description": description,
                 }
             )
@@ -506,6 +528,7 @@ Considering the following task, what experts should be involved to the task?
         building_task: str,
         library_path_or_json: str,
         default_llm_config: Dict,
+        top_k: int = 5,
         coding: Optional[bool] = None,
         code_execution_config: Optional[Dict] = None,
         use_oai_assistant: Optional[bool] = False,
@@ -577,7 +600,7 @@ Considering the following task, what experts should be involved to the task?
                 metadatas=[{"source": "agent_profile"} for _ in range(len(agent_library))],
                 ids=[f"agent_{i}" for i in range(len(agent_library))],
             )
-            agent_profile_list = collection.query(query_texts=[building_task], n_results=self.max_agents)["documents"][
+            agent_profile_list = collection.query(query_texts=[building_task], n_results=top_k)["documents"][
                 0
             ]
 
@@ -612,36 +635,15 @@ Considering the following task, what experts should be involved to the task?
             agent_name_list = [agent_name.strip().replace(" ", "_") for agent_name in resp_agent_name.split(",")]
 
             # search profile from library
-            agent_profile_list = []
+            agent_config_list = []
             for name in agent_name_list:
                 for agent in agent_library:
                     if agent["name"] == name:
-                        agent_profile_list.append(agent["profile"])
+                        agent_config_list.append(agent)
                         break
             print(f"{agent_name_list} are selected.", flush=True)
 
         print(colored("==> Generating system message...", "green"), flush=True)
-        # generate system message from profile
-        agent_sys_msg_list = []
-        for name, profile in list(zip(agent_name_list, agent_profile_list)):
-            print(f"Preparing system message for {name}...", flush=True)
-            resp_agent_sys_msg = (
-                build_manager.create(
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": self.AGENT_SYS_MSG_PROMPT.format(
-                                task=building_task,
-                                position=f"{name}\nPOSITION PROFILE: {profile}",
-                                default_sys_msg=self.DEFAULT_DESCRIPTION,
-                            ),
-                        }
-                    ]
-                )
-                .choices[0]
-                .message.content
-            )
-            agent_sys_msg_list.append(f"{resp_agent_sys_msg}\n\n{self.CODING_AND_TASK_SKILL_INSTRUCTION}")
 
         if coding is None:
             resp = (
@@ -653,20 +655,13 @@ Considering the following task, what experts should be involved to the task?
             )
             coding = True if resp == "YES" else False
 
-        user_proxy_desc = ""
-        if coding is True:
-            user_proxy_desc = f"\nThe group also include a Computer_terminal to help you run the python and shell code."
-
-        for name, sys_msg, description in list(zip(agent_name_list, agent_sys_msg_list, agent_profile_list)):
-            enhanced_sys_msg = self.GROUP_CHAT_DESCRIPTION.format(
-                name=name, members=agent_name_list, user_proxy_desc=user_proxy_desc, sys_msg=sys_msg
-            )
+        for name, config in list(zip(agent_name_list, agent_config_list)):
             agent_configs.append(
                 {
                     "name": name,
                     "model": self.agent_model,
-                    "system_message": enhanced_sys_msg,
-                    "description": description,
+                    "system_message": config['system_message'],
+                    "description": config['description'],
                 }
             )
 
@@ -705,11 +700,9 @@ Considering the following task, what experts should be involved to the task?
         for config in agent_configs:
             print(f"Creating agent {config['name']} with backbone {config['model']}...", flush=True)
             self._create_agent(
-                config["name"],
-                config["model"],
-                default_llm_config,
-                system_message=config["system_message"],
-                description=config["description"],
+                agent_config=config.copy(),
+                member_name=[agent['name'] for agent in agent_configs['agent_configs']],
+                llm_config=default_llm_config,
                 use_oai_assistant=use_oai_assistant,
                 **kwargs,
             )

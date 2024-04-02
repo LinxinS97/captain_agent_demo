@@ -34,13 +34,16 @@ nested_mode_config = {
             "max_tokens": 1500,
             "cache_seed": None
         },
-        "coding": True
+        "coding": True,
+        
     },
     "group_chat_config": {"max_round": 15},
     "group_chat_llm_config": general_llm_config.copy(),
 }
 
 ## build agents
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
+
 meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config.copy(), nested_mode="autobuild")
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
@@ -121,7 +124,7 @@ checker_proxy = autogen.UserProxyAgent(
 
 message_to_check = "[Problem]: " + PROBLEM + f"\n[Reply]: {response_with_ans}\n\n[Ground truth answer]: " + ANSWER
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
-
+autogen.runtime_logging.stop()
 
 ####################
 testbed_utils.finalize(agents=[meta_agent, meta_user_proxy, answer_checker, checker_proxy])

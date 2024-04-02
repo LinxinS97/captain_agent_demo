@@ -35,6 +35,8 @@ default_llm_config = {
 }
 
 ## build agents
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
+
 config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4-1106"]})
 builder = AgentBuilder(config_file_or_env=config,
                        builder_model='gpt-4-1106',
@@ -64,6 +66,6 @@ from my_tests import run_tests
 run_tests(__ENTRY_POINT__)
 ```
 """)
-
+autogen.runtime_logging.stop()
 ##############################
 testbed_utils.finalize(agents=agent_list)

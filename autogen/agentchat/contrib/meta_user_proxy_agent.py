@@ -25,7 +25,7 @@ def check_nested_mode_config(nested_mode_config: Dict):
 class MetaUserProxyAgent(ConversableAgent):
     """(In preview) A proxy agent for the meta agent, that can execute code and provide feedback to the other agents."""
 
-    SUMMARY_PROMPT = """# Your task
+    CONVERSATION_REVIEW_PROMPT = """# Your task
 Briefly summarize the conversation history derive from a experts' group chat by following the answer format.
 If you found contradictions or issues in the conversation, point it out and mark the "Need double check" as "Yes".
 
@@ -59,8 +59,7 @@ Collect information from the general task, follow the plan from manager to solve
 {general_task}
 
 # Task and advises from manager
-{manager_task}
-"""
+{manager_task} """
 
     DEFAULT_AUTO_REPLY = "Thank you. Please keep solving the problem. If you think the problem is solved, please reply me only with 'TERMINATE'."
 
@@ -175,10 +174,16 @@ Collect information from the general task, follow the plan from manager to solve
         if group_name in self.build_history.keys():
             agent_list, agent_configs = builder.load(config_json=json.dumps(self.build_history[group_name]))
         else:
-            agent_list, agent_configs = builder.build(
-                building_task, **self._nested_mode_config["autobuild_build_config"]
-            )
-            self.build_history[group_name] = agent_configs.copy()
+            if self._nested_mode_config["autobuild_build_config"]['library_path'] is not None:
+                agent_list, agent_configs = builder.build_from_library(
+                    building_task, **self._nested_mode_config["autobuild_build_config"]
+                )
+                self.build_history[group_name] = agent_configs.copy()
+            else:
+                agent_list, agent_configs = builder.build(
+                    building_task, **self._nested_mode_config["autobuild_build_config"]
+                )
+                self.build_history[group_name] = agent_configs.copy()
 
         if self._agent_config_save_path is not None:
             building_task_md5 = hashlib.md5(building_task.encode("utf-8")).hexdigest()
@@ -219,7 +224,7 @@ Collect information from the general task, follow the plan from manager to solve
             )
             summarized_history = compressed_prompt['compressed_prompt']
         else:
-            # Summarize the group chat history, we use builder model to summarize the conversation history.
+            # Review the group chat history.
             summary_model_config_list = autogen.config_list_from_json(
                 builder.config_file_or_env,
                 file_location=builder.config_file_location,
@@ -231,17 +236,13 @@ Collect information from the general task, follow the plan from manager to solve
                     messages=[
                         {
                             "role": "user",
-                            "content": self.SUMMARY_PROMPT.format(chat_history=chat_history),
+                            "content": self.CONVERSATION_REVIEW_PROMPT.format(chat_history=chat_history),
                         }
                     ]
                 )
                 .choices[0]
                 .message.content
             )
-
-        # first_time_flag = "\n\n[IMPORTANT] This is the FIRST-TIME RESULT, you need to check the result and the reason's logical compliance carefully by a step-by-step backward reasoning." \
-        #     if self.build_times == 1 \
-        #     else ""
 
         return f"# Response from seek_agent_help: \n{summarized_history}"
 

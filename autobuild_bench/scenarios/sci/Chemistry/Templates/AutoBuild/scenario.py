@@ -32,6 +32,8 @@ default_llm_config = {
 }
 
 ## build agents
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
+
 config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4-1106"]})
 builder = AgentBuilder(config_file_or_env=config,
                        builder_model='gpt-4-1106',
@@ -113,7 +115,7 @@ checker_proxy = autogen.UserProxyAgent(
 
 message_to_check = "[Problem]: " + PROBLEM + f"\n[Reply]: {response_with_ans}\n\n[Ground truth answer]: " + ANSWER
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
-
+autogen.runtime_logging.stop()
 
 ####################
 testbed_utils.finalize(agents=agent_list + [answer_checker, checker_proxy])

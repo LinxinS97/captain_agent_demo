@@ -52,6 +52,8 @@ nested_mode_config = {
 }
 
 ## build agents
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
+
 meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config, nested_mode="autobuild")
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
@@ -63,7 +65,7 @@ meta_user_proxy = MetaUserProxyAgent(
         "work_dir": work_dir,
     },  # you can modify the setting
     # modify the path
-    agent_config_save_path="/Users/elpis/llm/autogen-autobuild-dev/autobuild_bench/scenarios/programming/HumanEval/Saved_agents"
+    agent_config_save_path="__AGENT_SAVE_PATH__"
 )
 
 ## Run task
@@ -85,6 +87,6 @@ run_tests(__ENTRY_POINT__)
 ```
 
 """)
-
+autogen.runtime_logging.stop()
 ####################
 testbed_utils.finalize(agents=[meta_agent, meta_user_proxy])

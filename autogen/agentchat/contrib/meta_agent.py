@@ -32,25 +32,6 @@ class MetaAgent(ConversableAgent):
         },
     }
 
-    AUTOBUILD_QUERY_TOOL = {
-        "type": "function",
-        "function": {
-            "name": "autobuild_by_name",
-            "description": "Query a previously built group of experts by name and use them to solve the execution_task you provide.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "group_name": {"type": "string", "description": "[REQUIRED] Name of a built group."},
-                    "execution_task": {
-                        "type": "string",
-                        "description": "[REQUIRED] task that needs the experts to solve by conversation. It should include 1. the problem that needs to be solved and 2. the possible outlines/steps/instructions of how to solve this problem.",
-                    },
-                },
-            },
-            "required": ["group_name", "execution_task"],
-        },
-    }
-
     AUTOBUILD_TOOL = {
         "type": "function",
         "function": {

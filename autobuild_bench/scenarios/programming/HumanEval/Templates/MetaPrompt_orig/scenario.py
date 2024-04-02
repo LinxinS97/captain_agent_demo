@@ -21,6 +21,8 @@ with open("prompt.txt", "rt") as fh:
     PROMPT = fh.read()
 
 ###############################
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
+
 config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
 llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
@@ -62,6 +64,6 @@ run_tests(__ENTRY_POINT__)
 ```
 
 The pass code should let `run_tests` function return "all test passed".""")
-
+autogen.runtime_logging.stop()
 ##############################
 testbed_utils.finalize(agents=[meta_prompt_agent, user_proxy])

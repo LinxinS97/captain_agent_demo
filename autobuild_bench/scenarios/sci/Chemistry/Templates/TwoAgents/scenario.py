@@ -19,6 +19,8 @@ with open("expected_answer.txt", "rt") as fh:
 
 
 ####################
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
+
 config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
 llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
@@ -101,7 +103,7 @@ checker_proxy = autogen.UserProxyAgent(
 
 message_to_check = f"Problem: [[{PROBLEM}]]\n\nReply: \n[[{response_with_ans}]]\n\nGround truth answer: \n[[{ANSWER}, unit: {UNIT}]]"
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
-
+autogen.runtime_logging.stop()
 
 ####################
 testbed_utils.finalize(agents=[assistant, user_proxy, answer_checker, checker_proxy])

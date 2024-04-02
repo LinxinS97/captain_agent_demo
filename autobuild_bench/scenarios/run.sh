@@ -62,19 +62,19 @@ echo "*********************SciBench/Chem*********************"
 cd ../../sci/Chemistry
 python Scripts/init_tasks.py
 wait
-echo "*********************HumanEval/MetaPrompt_autogen*********************"
+echo "*********************SciBench/Chem/MetaPrompt_autogen*********************"
 echo "Yes" | autogenbench run Tasks/sci_chem_MetaPrompt_autogen.jsonl --native -s 1
 wait
-echo "*********************HumanEval/TwoAgents*********************"
+echo "*********************SciBench/Chem/TwoAgents*********************"
 echo "Yes" | autogenbench run Tasks/sci_chem_TwoAgents.jsonl --native -s 1
 wait
-echo "*********************HumanEval/AutoBuild*********************"
+echo "*********************SciBench/Chem/AutoBuild*********************"
 echo "Yes" | autogenbench run Tasks/sci_chem_AutoBuild.jsonl --native -s 1
 wait
-echo "*********************HumanEval/MetaAgent*********************"
+echo "*********************SciBench/Chem/MetaAgent*********************"
 echo "Yes" | autogenbench run Tasks/sci_chem_MetaAgent.jsonl --native -s 1
 wait
-echo "*********************HumanEval/SingleLLM*********************"
+echo "*********************SciBench/Chem/SingleLLM*********************"
 echo "Yes" | autogenbench run Tasks/sci_chem_SingleLLM.jsonl --native -s 1
 wait
 
@@ -82,18 +82,18 @@ echo "*********************SciBench/Phy*********************"
 cd ../../sci/Physics
 python Scripts/init_tasks.py
 wait
-echo "*********************HumanEval/MetaPrompt_autogen*********************"
+echo "*********************SciBench/Phy/MetaPrompt_autogen*********************"
 echo "Yes" | autogenbench run Tasks/sci_phy_MetaPrompt_autogen.jsonl --native -s 1
 wait
-echo "*********************HumanEval/TwoAgents*********************"
+echo "*********************SciBench/Phy/TwoAgents*********************"
 echo "Yes" | autogenbench run Tasks/sci_phy_TwoAgents.jsonl --native -s 1
 wait
-echo "*********************HumanEval/AutoBuild*********************"
+echo "*********************SciBench/Phy/AutoBuild*********************"
 echo "Yes" | autogenbench run Tasks/sci_phy_AutoBuild.jsonl --native -s 1
 wait
-echo "*********************HumanEval/MetaAgent*********************"
+echo "*********************SciBench/Phy/MetaAgent*********************"
 echo "Yes" | autogenbench run Tasks/sci_phy_MetaAgent.jsonl --native -s 1
 wait
-echo "*********************HumanEval/SingleLLM*********************"
+echo "*********************SciBench/Phy/SingleLLM*********************"
 echo "Yes" | autogenbench run Tasks/sci_phy_SingleLLM.jsonl --native -s 1
 wait

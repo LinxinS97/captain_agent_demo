@@ -9,6 +9,7 @@ import io
 import json
 import os
 import base64
+import re
 from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
 URL = "https://github.com/openai/human-eval/raw/master/data/HumanEval.jsonl.gz"
@@ -17,8 +18,10 @@ SCRIPT_PATH = os.path.realpath(__file__)
 SCRIPT_NAME = os.path.basename(SCRIPT_PATH)
 SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
 
-TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
 SCENARIO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
+TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
+TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
+DOWNLOADS_DIR = os.path.join(SCENARIO_DIR, "Downloads")
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 # A selected subset of HumanEval problems to work with during development
@@ -77,8 +80,7 @@ def create_jsonl(name, tasks, template, agent_list = None):
     """Creates a JSONL scenario file with a given name, list of HumanEval tasks, and template path."""
 
     # Create a task directory if it doesn't exist
-    scenario_dir = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
-    task_dir = os.path.join(scenario_dir, "Tasks")
+    task_dir = os.path.join(SCENARIO_DIR, "Tasks")
     if not os.path.isdir(task_dir):
         os.mkdir(task_dir)
 

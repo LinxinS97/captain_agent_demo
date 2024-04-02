@@ -5,6 +5,8 @@ from datetime import datetime
 import testbed_utils
 
 testbed_utils.init()
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
+
 ##############################
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
@@ -114,7 +116,7 @@ checker_proxy = autogen.UserProxyAgent(
 
 message_to_check = "Problem: " + question + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
-
+autogen.runtime_logging.stop()
 
 ####################
 testbed_utils.finalize(agents=[assistant, user_proxy, answer_checker, checker_proxy])

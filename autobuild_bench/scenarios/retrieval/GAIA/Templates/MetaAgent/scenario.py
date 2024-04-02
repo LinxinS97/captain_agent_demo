@@ -6,6 +6,8 @@ from autogen.agentchat.contrib.meta_user_proxy_agent import MetaUserProxyAgent
 
 testbed_utils.init()
 
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
+
 GAIA_SYSTEM_MESSAGE = (
     "You are a helpful AI assistant, and today's date is "
     + datetime.now().date().isoformat()
@@ -141,7 +143,7 @@ checker_proxy = autogen.UserProxyAgent(
 
 message_to_check = "[Problem]: " + question + f"\n[Reply]: {response_with_ans}\n\n[Ground truth answer]: " + ANSWER
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
-
+autogen.runtime_logging.stop()
 
 ####################
 testbed_utils.finalize(agents=[meta_agent, meta_user_proxy, answer_checker, checker_proxy])

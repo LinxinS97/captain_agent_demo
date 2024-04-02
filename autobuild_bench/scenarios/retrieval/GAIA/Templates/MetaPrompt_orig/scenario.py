@@ -5,6 +5,7 @@ from datetime import datetime
 import testbed_utils
 
 testbed_utils.init()
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
 
 GAIA_SYSTEM_MESSAGE = (
     "You are a helpful AI assistant, and today's date is "
@@ -106,6 +107,7 @@ checker_proxy = autogen.UserProxyAgent(
 
 message_to_check = "Problem: " + question + f"\n\nReply: {response_with_ans}\n\nGround truth answer: " + ANSWER
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
+autogen.runtime_logging.stop()
 
 ####################
 testbed_utils.finalize(agents=[meta_prompt_agent, user_proxy, answer_checker, checker_proxy])

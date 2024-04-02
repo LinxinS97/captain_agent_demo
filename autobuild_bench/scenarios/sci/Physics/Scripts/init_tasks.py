@@ -15,7 +15,7 @@ SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
 SCENARIO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
 TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
 TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
-DOWNLOADS_DIR = os.path.join(SCENARIO_DIR.pardir, 'Downloads')
+DOWNLOADS_DIR = os.path.join(os.path.join(SCENARIO_DIR, os.path.pardir), "Downloads")
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
 SELECTED_PHY_PROBLEMS = [
