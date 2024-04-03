@@ -21,7 +21,7 @@ pip install flash-attn --no-build-isolation
 pip install decord opencv-python git+https://github.com/facebookresearch/pytorchvideo.git@28fe037d212663c6a24f373b94cc5d478c8c1a1d
 """
 
-def main(video_path: str, question: str):
+def video_qa(video_path: str, question: str):
     """
     TODO: tool description
     """
