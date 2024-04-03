@@ -13,7 +13,7 @@ from autogen.tool_utils import (
 
 
 class ToolRetriever:
-    def __init__(self, corpus_tsv_path="tools/corpus_dedup.tsv", model_path="ToolIR/", tool_path="tools/toollib"):
+    def __init__(self, corpus_tsv_path="tools/corpus.tsv", model_path="ToolIR/", tool_path="tools/toollib"):
         self.corpus_tsv_path = corpus_tsv_path
         self.model_path = model_path
         self.tool_path = tool_path
