@@ -174,12 +174,14 @@ Collect information from the general task, follow the plan from manager to solve
         if group_name in self.build_history.keys():
             agent_list, agent_configs = builder.load(config_json=json.dumps(self.build_history[group_name]))
         else:
-            if self._nested_mode_config["autobuild_build_config"]['library_path'] is not None:
+            if self._nested_mode_config["autobuild_build_config"].get('library_path_or_json', None):
+                # Build from retrieval
                 agent_list, agent_configs = builder.build_from_library(
                     building_task, **self._nested_mode_config["autobuild_build_config"]
                 )
                 self.build_history[group_name] = agent_configs.copy()
             else:
+                # Build from scratch
                 agent_list, agent_configs = builder.build(
                     building_task, **self._nested_mode_config["autobuild_build_config"]
                 )

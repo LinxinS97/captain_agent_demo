@@ -6,6 +6,7 @@
 import json
 import os
 import sys
+import re
 from huggingface_hub import snapshot_download
 from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
@@ -110,14 +111,12 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
             gaia_test_tasks[data["Level"] - 1].append(data)
 
-    templates = {
-        "single_llm": os.path.join(TEMPLATES_DIR, "SingleLLM"),
-        "two_agents": os.path.join(TEMPLATES_DIR, "TwoAgents"),
-        "meta_prompt_orig": os.path.join(TEMPLATES_DIR, "MetaPrompt_orig"),
-        "meta_prompt_autogen": os.path.join(TEMPLATES_DIR, "MetaPrompt_autogen"),
-        "autobuild": os.path.join(TEMPLATES_DIR, "AutoBuild"),
-        "meta_agent": os.path.join(TEMPLATES_DIR, "MetaAgent")
-    }
+    # list all directories in the Templates directory
+    # and populate a dictionary with the name and path
+    templates = {}
+    for entry in os.scandir(TEMPLATES_DIR):
+        if entry.is_dir():
+            templates[re.sub(r"\s", "", entry.name)] = entry.path
 
     # Add coding directories if needed (these are usually empty and left out of the repo)
     for template in templates.values():

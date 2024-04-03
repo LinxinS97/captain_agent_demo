@@ -96,7 +96,7 @@ class WebSurferAgent(ConversableAgent):
                 if "config_list" in self.summarizer_llm_config:  # type: ignore[operator]
                     preferred_models = filter_config(  # type: ignore[no-untyped-call]
                         self.summarizer_llm_config["config_list"],  # type: ignore[index]
-                        {"model": ["gpt-3.5-turbo-1106", "gpt-3.5-turbo-16k-0613", "gpt-3.5-turbo-16k"]},
+                        {"model": ["gpt-4-1106"]},
                     )
                     if len(preferred_models) == 0:
                         logger.warning(

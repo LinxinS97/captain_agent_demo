@@ -4,11 +4,13 @@ import subprocess as sp
 import socket
 import json
 import hashlib
-import os
+import re
 import importlib
+import logging
 from termcolor import colored
 from typing import Optional, List, Dict, Tuple
 
+logger = logging.getLogger(__name__)
 
 def _config_check(config: Dict):
     # check config loading
@@ -52,12 +54,12 @@ When the task is complete and the result has been carefully verified, after obta
 """
 
     DEFAULT_DESCRIPTION = """## Your role
-Complete this part with expert's name and skill description
+[Complete this part with expert's name and skill description]
 
 ## Task and skill instructions
-- Task description
-- Skill description
-- (Optional) Other information
+- [Complete this part with task description]
+- [Complete this part with skill description]
+- [(Optional) Complete this part with other information]
 """
 
     CODING_AND_TASK_SKILL_INSTRUCTION = """## Useful instructions for task-solving
@@ -102,8 +104,8 @@ Suggest less then {max_agents} experts with their name according to the followin
 For example: Python_Expert, Math_Expert, ... """
 
     AGENT_SYS_MSG_PROMPT = """# Your goal
-- According to the task and expert name, write a high-quality description for the expert by completing the "default description."
-- Ensure that your instructions are clear and unambiguous, and include all necessary information.
+- According to the task and expert name, write a high-quality description for the expert by filling the given template.
+- Ensure that your description are clear and unambiguous, and include all necessary information.
 
 # Task
 {task}
@@ -111,17 +113,17 @@ For example: Python_Expert, Math_Expert, ... """
 # Expert name
 {position}
 
-# Default description
+# Template
 {default_sys_msg}
 """
 
     AGENT_DESCRIPTION_PROMPT = """# Your goal
 Summarize the following expert's description in a sentence.
 
-# EXPERT NAME
+# Expert name
 {position}
 
-# EXPERT DESCRIPTION
+# Expert's description
 {sys_msg}
 """
 
@@ -140,6 +142,27 @@ Considering the following task, what experts should be involved to the task?
 - Separate expert names by commas and use "_" instead of space. For example, Product_manager,Programmer
 - Only return the list of expert names.
 """
+
+    AGENT_RECALL_PROMPT = """# Your goal
+Given a user instruction, pick less then {max_agents} experts from a given expert pool.
+If there is no suitable experts, reply with "REJECT ALL".
+
+# Requirement
+{skills}
+
+# Expert pool (formatting with name: description)
+{expert_pool}
+
+# Answer format
+## If pick experts
+name1: description1
+name2: description2
+...
+
+## If there is no suitable experts
+REJECT ALL
+"""
+
 
     def __init__(
         self,
@@ -332,28 +355,34 @@ Considering the following task, what experts should be involved to the task?
             if self.cached_configs['coding'] is True:
                 user_proxy_desc = f"\nThe group also include a Computer_terminal to help you run the python and shell code."
 
+            model_class = autogen.AssistantAgent
+            if model_path:
+                module_path, model_class_name = model_path.replace('/').rsplit('.', 1)
+                module = importlib.import_module(module_path)
+                model_class = getattr(module, model_class_name)
+                if not isinstance(model_class, autogen.ConversableAgent):
+                    logger.error(f"{model_class} is not a ConversableAgent. Use AssistantAgent as default")
+                    model_class = autogen.AssistantAgent
+                    
+            if system_message == "":
+                system_message = model_class().system_message
+                
+            additional_config = {
+                k: v for k, v in agent_config.items() if k not in ['model', 'name', 'system_message', 'description']
+            }
             enhanced_sys_msg = self.GROUP_CHAT_DESCRIPTION.format(
                 name=agent_name, 
                 members=member_name, 
                 user_proxy_desc=user_proxy_desc, 
                 sys_msg=system_message
             )
-            model_class = autogen.AssistantAgent
-            if model_path:
-                module_path, model_class_name = model_path.replace('/').rsplit('.', 1)
-                module = importlib.import_module(module_path)
-                model_class = getattr(module, model_class_name)
-            else:
-                additional_config = {
-                    k: v for k, v in agent_config if k not in ['model', 'name', 'system_message', 'description']
-                }
-                agent = model_class(
-                    name=agent_name,
-                    llm_config=current_config.copy(),
-                    system_message=enhanced_sys_msg,
-                    description=description,
-                    **additional_config
-                )
+            agent = model_class(
+                name=agent_name,
+                llm_config=current_config.copy(),
+                system_message=enhanced_sys_msg,
+                description=description,
+                **additional_config
+            )
         self.agent_procs_assign[agent_name] = (agent, server_id)
         return agent
 
@@ -520,7 +549,7 @@ Considering the following task, what experts should be involved to the task?
                 "code_execution_config": code_execution_config,
             }
         )
-
+        _config_check(self.cached_configs)
         return self._build_agents(use_oai_assistant, user_proxy=user_proxy, **kwargs)
 
     def build_from_library(
@@ -528,7 +557,7 @@ Considering the following task, what experts should be involved to the task?
         building_task: str,
         library_path_or_json: str,
         default_llm_config: Dict,
-        top_k: int = 5,
+        top_k: int = 3,
         coding: Optional[bool] = None,
         code_execution_config: Optional[Dict] = None,
         use_oai_assistant: Optional[bool] = False,
@@ -568,8 +597,6 @@ Considering the following task, what experts should be involved to the task?
                 "timeout": 10,
             }
 
-        agent_configs = []
-
         config_list = autogen.config_list_from_json(
             self.config_file_or_env,
             file_location=self.config_file_location,
@@ -587,63 +614,79 @@ Considering the following task, what experts should be involved to the task?
         except json.decoder.JSONDecodeError:
             with open(library_path_or_json, "r") as f:
                 agent_library = json.load(f)
+        except Exception as e:
+            raise e
 
-        print(colored("==> Looking for suitable agents in library...", "green"), flush=True)
-        if embedding_model is not None:
-            chroma_client = chromadb.Client()
-            collection = chroma_client.create_collection(
-                name="agent_list",
-                embedding_function=embedding_functions.SentenceTransformerEmbeddingFunction(model_name=embedding_model),
-            )
-            collection.add(
-                documents=[agent["description"] for agent in agent_library],
-                metadatas=[{"source": "agent_profile"} for _ in range(len(agent_library))],
-                ids=[f"agent_{i}" for i in range(len(agent_library))],
-            )
-            agent_profile_list = collection.query(query_texts=[building_task], n_results=top_k)["documents"][
+        print(colored("==> Looking for suitable agents in the library...", "green"), flush=True)
+
+        skills = re.findall(r'-\s*(.+)', building_task)
+        if len(skills) == 0:
+            skills = [building_task]
+        chroma_client = chromadb.Client()
+        collection = chroma_client.create_collection(
+            name="agent_list",
+            embedding_function=embedding_functions.SentenceTransformerEmbeddingFunction(model_name=embedding_model),
+        )
+        collection.add(
+            documents=[agent["description"] for agent in agent_library],
+            metadatas=[{"source": "agent_profile"} for _ in range(len(agent_library))],
+            ids=[f"agent_{i}" for i in range(len(agent_library))],
+        )
+        agent_desc_list = set()
+        for skill in skills:
+            recall = set(collection.query(query_texts=[skill], n_results=top_k)["documents"][
                 0
-            ]
+            ])
+            agent_desc_list = agent_desc_list.union(recall)
 
-            # search name from library
-            agent_name_list = []
-            for profile in agent_profile_list:
-                for agent in agent_library:
-                    if agent["profile"] == profile:
-                        agent_name_list.append(agent["name"])
-                        break
-            chroma_client.delete_collection(collection.name)
-            print(f"{agent_name_list} are selected.", flush=True)
-        else:
-            agent_profiles = [
-                f"No.{i + 1} AGENT's NAME: {agent['name']}\nNo.{i + 1} AGENT's PROFILE: {agent['profile']}\n\n"
-                for i, agent in enumerate(agent_library)
-            ]
-            resp_agent_name = (
-                build_manager.create(
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": self.AGENT_SEARCHING_PROMPT.format(
-                                task=building_task, agent_list="".join(agent_profiles), max_agents=self.max_agents
-                            ),
-                        }
-                    ]
-                )
-                .choices[0]
-                .message.content
+        # searching from library
+        agent_config_list = []
+        for description in list(agent_desc_list):
+            for agent in agent_library:
+                if agent["description"] == description:
+                    agent_config_list.append(agent.copy())
+                    break
+        chroma_client.delete_collection(collection.name)
+
+        # double recall from the searching result
+        expert_pool = [f"{agent['name']}: {agent['description']}" for agent in agent_config_list]
+        selected_agents = (
+            build_manager.create(
+                messages=[{
+                    "role": "user", 
+                    "content": self.AGENT_RECALL_PROMPT.format(
+                        skills=building_task, 
+                        expert_pool=expert_pool, 
+                        max_agents=self.max_agents
+                    )
+                }]
             )
-            agent_name_list = [agent_name.strip().replace(" ", "_") for agent_name in resp_agent_name.split(",")]
+            .choices[0]
+            .message.content
+        )
+        # if no suitable agents, build from scratch
+        if ("reject all" in selected_agents.lower() or 
+            "reject all." in selected_agents.lower()):
+            return self.build(
+                building_task,
+                default_llm_config,
+                coding,
+                code_execution_config.copy(),
+                use_oai_assistant,
+                user_proxy,
+                **kwargs
+            )
+        
+        selected_agents = selected_agents.strip().replace('\n\n', '\n').split('\n')
+        selected_agents = [(agent.split(':')[0].strip(), agent.split(':')[1].strip()) for agent in selected_agents]
+        
+        recalled_agent_config_list = []
+        for name, desc in selected_agents:
+            for agent in agent_config_list:
+                if name == agent['name'] and desc == agent['description']:
+                    recalled_agent_config_list.append(agent.copy())
 
-            # search profile from library
-            agent_config_list = []
-            for name in agent_name_list:
-                for agent in agent_library:
-                    if agent["name"] == name:
-                        agent_config_list.append(agent)
-                        break
-            print(f"{agent_name_list} are selected.", flush=True)
-
-        print(colored("==> Generating system message...", "green"), flush=True)
+        print(f"{[agent['name'] for agent in recalled_agent_config_list]} are selected.", flush=True)
 
         if coding is None:
             resp = (
@@ -655,26 +698,16 @@ Considering the following task, what experts should be involved to the task?
             )
             coding = True if resp == "YES" else False
 
-        for name, config in list(zip(agent_name_list, agent_config_list)):
-            agent_configs.append(
-                {
-                    "name": name,
-                    "model": self.agent_model,
-                    "system_message": config['system_message'],
-                    "description": config['description'],
-                }
-            )
-
         self.cached_configs.update(
             {
                 "building_task": building_task,
-                "agent_configs": agent_configs,
+                "agent_configs": recalled_agent_config_list,
                 "coding": coding,
                 "default_llm_config": default_llm_config,
                 "code_execution_config": code_execution_config,
             }
         )
-
+        _config_check(self.cached_configs)
         return self._build_agents(use_oai_assistant, user_proxy=user_proxy, **kwargs)
 
     def _build_agents(
@@ -701,7 +734,7 @@ Considering the following task, what experts should be involved to the task?
             print(f"Creating agent {config['name']} with backbone {config['model']}...", flush=True)
             self._create_agent(
                 agent_config=config.copy(),
-                member_name=[agent['name'] for agent in agent_configs['agent_configs']],
+                member_name=[agent['name'] for agent in agent_configs],
                 llm_config=default_llm_config,
                 use_oai_assistant=use_oai_assistant,
                 **kwargs,

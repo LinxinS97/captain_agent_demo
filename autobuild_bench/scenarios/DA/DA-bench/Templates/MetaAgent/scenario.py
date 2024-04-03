@@ -52,7 +52,7 @@ nested_mode_config = {
             "top_p": 0.95,
             "max_tokens": 1500,
         },
-        "coding": True
+        "coding": True,
     },
     "group_chat_config": {"max_round": 15},
     "group_chat_llm_config": general_llm_config.copy(),

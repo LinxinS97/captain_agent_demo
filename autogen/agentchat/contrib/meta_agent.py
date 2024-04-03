@@ -75,16 +75,14 @@ The tool "seek_experts_help" can build a group of experts according to the build
 
 ## building_task
 This task helps a build manager to build a group of experts for your task.
-You should:
-- Describe the task and the experts' required skills.
-- Highlight the coding and verification skills.
-- Suggest some possible experts' names with corresponding descriptions in the format:
-    agent_name1: description
-    agent_name2: description
-    ...
-    Experts should be distinguishable by their skills and names.
-- The name should follow the format of ^[a-zA-Z0-9_-]{{1,64}}$, use "_" to split words.
-- Include the information of execution_task without any deletion or ambiguity.
+You should list some possible skills with the following format for solving this task:
+
+### Format
+- description for skill 1
+- description for skill 2
+...
+- description for coding skill
+- description for verification skill
 
 ## execution_task
 This is the task that needs the experts to solve by conversation. 
