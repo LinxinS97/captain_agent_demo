@@ -1,10 +1,7 @@
 import json
 import re
-import torch
-import transformers
 import os
 from tqdm import tqdm
-from functools import partial
 import requests
 
 
@@ -106,8 +103,8 @@ def reformat_api_json(api_json):
 
     pure_api_name = change_name(standardize(api_json["api_name"]))
     template["name"] = f"{api_json['category_name']}.{standardize(api_json['tool_name'])}.{pure_api_name}"
-    # templete["name"] = pure_api_name + f"_for_{standard_tool_name}"
-    # templete["name"] = templete["name"][-64:]
+    # template["name"] = pure_api_name + f"_for_{standard_tool_name}"
+    # template["name"] = template["name"][-64:]
 
     # template["description"] = f"This is the subfunction for tool \"{standard_tool_name}\", you can use this tool. "
 

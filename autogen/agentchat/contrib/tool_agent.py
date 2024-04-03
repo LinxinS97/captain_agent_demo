@@ -18,7 +18,7 @@ Arguments:
 Return: A string version of the response from called api.
 
 ## Available APIs
-Below is the json schema of the avaiable apis.
+Below is the json schema of the available apis.
 """
 
     def __init__(
