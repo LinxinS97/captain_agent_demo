@@ -443,7 +443,7 @@ REJECT ALL
         """
         if code_execution_config is None:
             code_execution_config = {
-                "last_n_messages": 2,
+                "last_n_messages": 1,
                 "work_dir": "groupchat",
                 "use_docker": False,
                 "timeout": 10,
@@ -591,7 +591,7 @@ REJECT ALL
 
         if code_execution_config is None:
             code_execution_config = {
-                "last_n_messages": 2,
+                "last_n_messages": 1,
                 "work_dir": "groupchat",
                 "use_docker": False,
                 "timeout": 10,

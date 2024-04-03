@@ -4,6 +4,8 @@ node_modules/
 /.vs
 .vscode
 
+cache_dir
+
 # Log files
 *.log
 

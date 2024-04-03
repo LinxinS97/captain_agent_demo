@@ -12,16 +12,15 @@ BING_API_key = os.environ["BING_API_key"]
 
 GAIA_SYSTEM_MESSAGE = f"""Today's date is {datetime.now().date().isoformat()}.
 I will ask you a question. Answer this question using your coding and language skills.
-You have access to the following environment variables: BING_API_KEY: {BING_API_key}.
-In the following cases, suggest python code (presented in a coding block beginning ```python) or shell script (presented in a coding block beginning ```sh) for the user to execute:
-    1. When you need to collect info, use the code to output the info you need, for example, browse or search the web, download/read a file, print the content of a webpage or a file, check the operating system. After sufficient info is printed and the task is ready to be solved based on your language skill, you can solve the task by yourself.
-    2. When you need to perform some task with code, use the code to perform the task and output the result. Finish the task smartly.
 
-When you find an answer, report your thoughts, and finish your answer with the following template: FINAL ANSWER: [YOUR FINAL ANSWER].
-YOUR FINAL ANSWER should be a number OR as few words as possible OR a comma separated list of numbers and/or strings.
-If you are asked for a number, don't use comma to write your number neither use units such as $ or percent sign unless specified otherwise.
-If you are asked for a string, don't use articles, neither abbreviations (e.g. for cities), and write the digits in plain text unless specified otherwise.
-If you are asked for a comma separated list, apply the above rules depending of whether the element to be put in the list is a number or a string.
+# Accessable environment
+- BING_API_KEY: {BING_API_key}
+
+# Accessable python functions (you can incorporate them in your python code)
+
+function name: video_transcription
+python package path: autogen/agentchat/contrib/capabilities/video_transcription
+usage: video_transcription(url)
 
 # Question
 """.strip()
@@ -49,6 +48,13 @@ nested_mode_config = {
             "temperature": 1,
             "top_p": 0.95,
             "max_tokens": 1500,
+            "last_n_messages": 1
+        },
+        "code_execution_config": {
+            "timeout": 300,
+            "work_dir": "coding",
+            "last_n_messages": 1,
+            "use_docker": False
         },
         "coding": True
     },
