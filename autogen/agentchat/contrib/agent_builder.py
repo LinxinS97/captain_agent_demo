@@ -26,6 +26,15 @@ def _config_check(config: Dict):
         ), 'Missing agent "system_message" in your agent_configs.'
         assert agent_config.get("description", None) is not None, 'Missing agent "description" in your agent_configs.'
 
+def _retrieve_json(text):
+    match = re.findall(autogen.code_utils.CODE_BLOCK_PATTERN, text, flags=re.DOTALL)
+    if not match:
+        return text
+    code_blocks = []
+    for _, code in match:
+        code_blocks.append(code)
+    return code_blocks[0]
+
 
 class AgentBuilder:
     """
@@ -93,7 +102,7 @@ Answer only YES or NO.
 """
 
     AGENT_NAME_PROMPT = """# Your task
-Suggest less then {max_agents} experts with their name according to the following user requirement.
+Suggest no more then {max_agents} experts with their name according to the following user requirement.
 
 ## User requirement
 {task}
@@ -143,24 +152,23 @@ Considering the following task, what experts should be involved to the task?
 - Only return the list of expert names.
 """
 
-    AGENT_RECALL_PROMPT = """# Your goal
-Given a user instruction, pick less then {max_agents} experts from a given expert pool.
-If there is no suitable experts, reply with "REJECT ALL".
+    AGENT_SELECTION_PROMPT = """# Your goal
+Match roles in the role set to each expert in expert set.
 
-# Requirement
+# Skill set
 {skills}
 
 # Expert pool (formatting with name: description)
 {expert_pool}
 
 # Answer format
-## If pick experts
-name1: description1
-name2: description2
-...
-
-## If there is no suitable experts
-REJECT ALL
+```json
+{{
+    "skill_1 description": "expert_name: expert_description", // if there exists an expert that suitable for skill_1
+    "skill_2 description": "None", // if there is no experts that suitable for skill_2
+    ...
+}}
+```
 """
 
 
@@ -368,13 +376,13 @@ REJECT ALL
                 system_message = model_class().system_message
                 
             additional_config = {
-                k: v for k, v in agent_config.items() if k not in ['model', 'name', 'system_message', 'description']
+                k: v for k, v in agent_config.items() if k not in ['model', 'name', 'system_message', 'description', 'model_path']
             }
             enhanced_sys_msg = self.GROUP_CHAT_DESCRIPTION.format(
                 name=agent_name, 
                 members=member_name, 
                 user_proxy_desc=user_proxy_desc, 
-                sys_msg=system_message
+                sys_msg=f"{system_message}\n\n{self.CODING_AND_TASK_SKILL_INSTRUCTION}"
             )
             agent = model_class(
                 name=agent_name,
@@ -424,6 +432,7 @@ REJECT ALL
         code_execution_config: Optional[Dict] = None,
         use_oai_assistant: Optional[bool] = False,
         user_proxy: Optional[autogen.ConversableAgent] = None,
+        max_agents: Optional[int] = None,
         **kwargs,
     ) -> Tuple[List[autogen.ConversableAgent], Dict]:
         """
@@ -449,6 +458,9 @@ REJECT ALL
                 "timeout": 10,
             }
 
+        if max_agents is None:
+            max_agents = self.max_agents
+
         agent_configs = []
         self.building_task = building_task
 
@@ -470,7 +482,7 @@ REJECT ALL
                 messages=[
                     {
                         "role": "user",
-                        "content": self.AGENT_NAME_PROMPT.format(task=building_task, max_agents=self.max_agents),
+                        "content": self.AGENT_NAME_PROMPT.format(task=building_task, max_agents=max_agents),
                     }
                 ]
             )
@@ -500,7 +512,7 @@ REJECT ALL
                 .choices[0]
                 .message.content
             )
-            agent_sys_msg_list.append(f"{resp_agent_sys_msg}\n\n{self.CODING_AND_TASK_SKILL_INSTRUCTION}")
+            agent_sys_msg_list.append(resp_agent_sys_msg)
 
         print(colored("==> Generating description...", "green"), flush=True)
         agent_description_list = []
@@ -561,7 +573,7 @@ REJECT ALL
         coding: Optional[bool] = None,
         code_execution_config: Optional[Dict] = None,
         use_oai_assistant: Optional[bool] = False,
-        embedding_model: Optional[str] = None,
+        embedding_model: Optional[str] = "all-mpnet-base-v2",
         user_proxy: Optional[autogen.ConversableAgent] = None,
         **kwargs,
     ) -> Tuple[List[autogen.ConversableAgent], Dict]:
@@ -578,8 +590,7 @@ REJECT ALL
             code_execution_config: specific configs for user proxy (e.g., last_n_messages, work_dir, ...).
             use_oai_assistant: use OpenAI assistant api instead of self-constructed agent.
             embedding_model: a Sentence-Transformers model use for embedding similarity to select agents from library.
-                if None, an openai model will be prompted to select agents. As reference, chromadb use "all-mpnet-base-
-                v2" as default.
+                As reference, chromadb use "all-mpnet-base-v2" as default.
             user_proxy: user proxy's class that can be used to replace the default user proxy.
 
         Returns:
@@ -618,10 +629,10 @@ REJECT ALL
             raise e
 
         print(colored("==> Looking for suitable agents in the library...", "green"), flush=True)
-
         skills = re.findall(r'-\s*(.+)', building_task)
         if len(skills) == 0:
             skills = [building_task]
+        
         chroma_client = chromadb.Client()
         collection = chroma_client.create_collection(
             name="agent_list",
@@ -639,7 +650,6 @@ REJECT ALL
             ])
             agent_desc_list = agent_desc_list.union(recall)
 
-        # searching from library
         agent_config_list = []
         for description in list(agent_desc_list):
             for agent in agent_library:
@@ -650,41 +660,54 @@ REJECT ALL
 
         # double recall from the searching result
         expert_pool = [f"{agent['name']}: {agent['description']}" for agent in agent_config_list]
-        selected_agents = (
-            build_manager.create(
-                messages=[{
-                    "role": "user", 
-                    "content": self.AGENT_RECALL_PROMPT.format(
-                        skills=building_task, 
-                        expert_pool=expert_pool, 
-                        max_agents=self.max_agents
-                    )
-                }]
+        while True:
+            skill_agent_pair_json = (
+                build_manager.create(
+                    messages=[{
+                        "role": "user", 
+                        "content": self.AGENT_SELECTION_PROMPT.format(
+                            skills=building_task, 
+                            expert_pool=expert_pool, 
+                            max_agents=self.max_agents
+                        )
+                    }]
+                )
+                .choices[0]
+                .message.content
             )
-            .choices[0]
-            .message.content
-        )
-        # if no suitable agents, build from scratch
-        if ("reject all" in selected_agents.lower() or 
-            "reject all." in selected_agents.lower()):
-            return self.build(
-                building_task,
-                default_llm_config,
-                coding,
-                code_execution_config.copy(),
-                use_oai_assistant,
-                user_proxy,
-                **kwargs
-            )
-        
-        selected_agents = selected_agents.strip().replace('\n\n', '\n').split('\n')
-        selected_agents = [(agent.split(':')[0].strip(), agent.split(':')[1].strip()) for agent in selected_agents]
+            try:
+                skill_agent_pair_json = _retrieve_json(skill_agent_pair_json)
+                skill_agent_pair = json.loads(skill_agent_pair_json)
+                break
+            except json.decoder.JSONDecodeError as e:
+                print(e)
+                time.sleep(30)
+                continue
         
         recalled_agent_config_list = []
-        for name, desc in selected_agents:
-            for agent in agent_config_list:
-                if name == agent['name'] and desc == agent['description']:
-                    recalled_agent_config_list.append(agent.copy())
+        recalled_name_desc = []
+        for skill, agent_profile in skill_agent_pair.items():
+            # If no suitable agent, generate an agent
+            if agent_profile == "None":
+                _, agent_config_temp = self.build(
+                    building_task = skill,
+                    default_llm_config = default_llm_config.copy(),
+                    coding = False,
+                    use_oai_assistant = use_oai_assistant,
+                    max_agents = 1
+                )
+                self.clear_agent(agent_config_temp['agent_configs'][0]['name'])
+                recalled_agent_config_list.append(agent_config_temp['agent_configs'][0])
+            else:
+                if agent_profile in recalled_name_desc:
+                    # prevent identical agents
+                    continue
+                recalled_name_desc.append(agent_profile)
+                name = agent_profile.split(':')[0].strip()
+                desc = agent_profile.split(':')[1].strip()
+                for agent in agent_config_list:
+                    if name == agent['name'] and desc == agent['description']:
+                        recalled_agent_config_list.append(agent.copy())
 
         print(f"{[agent['name'] for agent in recalled_agent_config_list]} are selected.", flush=True)
 
@@ -708,6 +731,7 @@ REJECT ALL
             }
         )
         _config_check(self.cached_configs)
+        
         return self._build_agents(use_oai_assistant, user_proxy=user_proxy, **kwargs)
 
     def _build_agents(

@@ -75,7 +75,7 @@ The tool "seek_experts_help" can build a group of experts according to the build
 
 ## building_task
 This task helps a build manager to build a group of experts for your task.
-You should list some possible skills with the following format for solving this task:
+You should list some useful and distinghishable skills with the following format.
 
 ### Format
 - description for skill 1

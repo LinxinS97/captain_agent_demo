@@ -27,7 +27,7 @@ class MetaUserProxyAgent(ConversableAgent):
 
     CONVERSATION_REVIEW_PROMPT = """# Your task
 Briefly summarize the conversation history derive from a experts' group chat by following the answer format.
-If you found contradictions or issues in the conversation, point it out and mark the "Need double check" as "Yes".
+If you found contradictions or issues in the conversation, point it out and mark the "Need double-check" as "Yes".
 
 # Conversation history:
 {chat_history}
