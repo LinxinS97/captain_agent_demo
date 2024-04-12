@@ -40,9 +40,6 @@ class AgentBuilder:
     """
     AgentBuilder can help user build an automatic task solving process powered by multi-agent system.
     Specifically, our building pipeline includes initialize and build.
-    In build(), we prompt a LLM to create multiple participant agents, and specify whether this task need programming to solve.
-    User can save the built agents' config by calling save(), and load the saved configs by load(), which can skip the
-        building process.
     """
 
     online_server_name = "online"

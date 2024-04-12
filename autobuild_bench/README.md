@@ -21,12 +21,13 @@ Use following command to run the benchmark for each scenario:
 ```bash
 cd [SCENARIO FOLDER. For example, /path/to/scenarious/MATH]
 python Scripts/init_tasks.py  // initialize the tasks
-autogenbench run Tasks/[TASK YOU WANT TO RUN].jsonl --native  // run the task. native is use to run the scenario without docker. If you have docker environment, you can remove it.
+autogenbench run Tasks/[TASK YOU WANT TO RUN].jsonl --native  // run the task. native is use to run the scenario without docker. If you have a docker environment, you can remove it.
 autogenbench tabulate Results/[TASK YOU WANT TO RUN]  // print the results in tabulate.
 ```
 
 If you want to debug, set `-s 1` to use a single data for testing:
 ```bash
+cd [SCENARIO FOLDER. For example, /path/to/scenarious/MATH]
 autogenbench run Tasks/[TASK YOU WANT TO RUN].jsonl -s 1
 ```
 If you want to debug a specific problem, you can run the `scenario.py` in `Results/[YOUR TASK]/[PROBLEM ID]/0/scenario.py` manually in debug mode.

@@ -16,11 +16,15 @@ I will ask you a question. Answer this question using your coding and language s
 # Accessable environment
 - BING_API_KEY: {BING_API_key}
 
-# Accessable python functions (you can incorporate them in your python code)
-
+# Accessable python functions (usage: incorporate them into your python code)
 function name: video_transcription
 python package path: autogen/agentchat/contrib/capabilities/video_transcription
-usage: video_transcription(url)
+usage: 
+```python
+from autogen.agentchat.contrib.capabilities.video_transcription import video_transcription
+
+video_transcription(url)
+```
 
 # Question
 """.strip()
@@ -48,7 +52,6 @@ nested_mode_config = {
             "temperature": 1,
             "top_p": 0.95,
             "max_tokens": 1500,
-            "last_n_messages": 1
         },
         "code_execution_config": {
             "timeout": 300,
