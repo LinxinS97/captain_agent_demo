@@ -226,7 +226,7 @@ Collect information from the general task, follow the plan from manager to solve
             )
             summarized_history = compressed_prompt['compressed_prompt']
         else:
-            # Review the group chat history.
+            # Conversation Reflection
             summary_model_config_list = autogen.config_list_from_json(
                 builder.config_file_or_env,
                 file_location=builder.config_file_location,

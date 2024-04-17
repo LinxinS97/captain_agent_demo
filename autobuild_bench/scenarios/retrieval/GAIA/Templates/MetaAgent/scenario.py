@@ -11,20 +11,9 @@ logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
 BING_API_key = os.environ["BING_API_key"]
 
 GAIA_SYSTEM_MESSAGE = f"""Today's date is {datetime.now().date().isoformat()}.
-I will ask you a question. Answer this question using your coding and language skills.
 
-# Accessable environment
-- BING_API_KEY: {BING_API_key}
-
-# Accessable python functions (usage: incorporate them into your python code)
-function name: video_transcription
-python package path: autogen/agentchat/contrib/capabilities/video_transcription
-usage: 
-```python
-from autogen.agentchat.contrib.capabilities.video_transcription import video_transcription
-
-video_transcription(url)
-```
+# Task
+You need to solve the below question given by a user.
 
 # Question
 """.strip()

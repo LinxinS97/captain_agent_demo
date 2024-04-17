@@ -676,8 +676,8 @@ Match roles in the role set to each expert in expert set.
                 skill_agent_pair_json = _retrieve_json(skill_agent_pair_json)
                 skill_agent_pair = json.loads(skill_agent_pair_json)
                 break
-            except json.decoder.JSONDecodeError as e:
-                print(e)
+            except Exception as e:
+                print(e, flush=True)
                 time.sleep(30)
                 continue
         
