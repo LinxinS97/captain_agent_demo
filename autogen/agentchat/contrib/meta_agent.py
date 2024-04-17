@@ -77,12 +77,9 @@ The tool "seek_experts_help" can build a group of experts according to the build
 This task helps a build manager to build a group of experts for your task.
 You should list some useful and distinghishable skills with the following format.
 
-### Format
 - description for skill 1
 - description for skill 2
 ...
-- description for coding skill
-- description for verification skill
 
 ## execution_task
 This is the task that needs the experts to solve by conversation. 
@@ -181,7 +178,6 @@ Upon the completion of all tasks and verifications, you should conclude the oper
             if system_message is None:
                 system_message = self.AUTOBUILD_SYSTEM_MESSAGE
             self.update_tool_signature(self.AUTOBUILD_TOOL, is_remove=False)
-            # self.update_tool_signature(self.AUTOBUILD_QUERY_TOOL, is_remove=False)
         elif nested_mode == "meta_prompting":
             if system_message is None:
                 system_message = self.META_PROMPTING_SYSTEM_MESSAGE

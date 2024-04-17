@@ -602,7 +602,7 @@ Match roles in the role set to each expert in expert set.
                 "last_n_messages": 1,
                 "work_dir": "groupchat",
                 "use_docker": False,
-                "timeout": 10,
+                "timeout": 120,
             }
 
         config_list = autogen.config_list_from_json(
@@ -626,7 +626,8 @@ Match roles in the role set to each expert in expert set.
             raise e
 
         print(colored("==> Looking for suitable agents in the library...", "green"), flush=True)
-        skills = re.findall(r'-\s*(.+)', building_task)
+        lines = building_task.split("\n")
+        skills = [line.split("-", 1)[1].strip() if line.startswith("-") else line for line in lines]
         if len(skills) == 0:
             skills = [building_task]
         
@@ -772,7 +773,7 @@ Match roles in the role set to each expert in expert set.
                     human_input_mode="NEVER",
                     default_auto_reply=self.DEFAULT_PROXY_AUTO_REPLY,
                 )
-            agent_list = [user_proxy] + agent_list
+            agent_list = agent_list + [user_proxy]
 
         return agent_list, self.cached_configs.copy()
 

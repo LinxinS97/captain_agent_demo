@@ -2,9 +2,12 @@ import json
 import autogen
 import hashlib
 from .agent_builder import AgentBuilder
+from .tool_retriever import ToolBuilder
 from typing import Callable, Dict, List, Literal, Optional, Union
 from autogen.agentchat.conversable_agent import ConversableAgent
-from llmlingua import PromptCompressor
+import os
+
+from autogen.tool_utils import get_full_tool_description
 
 
 def check_nested_mode_config(nested_mode_config: Dict):
@@ -75,7 +78,6 @@ Collect information from the general task, follow the plan from manager to solve
         name: str,
         nested_mode_config: Dict,
         agent_config_save_path: str = None,
-        use_lingua: bool = False,
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
         human_input_mode: Optional[str] = "NEVER",
@@ -149,7 +151,7 @@ Collect information from the general task, follow the plan from manager to solve
         )
         self.register_function(
             function_map={
-                "seek_experts_help": lambda **args: self._run_autobuild(use_lingua=use_lingua, **args),
+                "seek_experts_help": lambda **args: self._run_autobuild(**args),
                 "meta_prompting": lambda **args: self._run_meta_prompting(**args),
             }
         )
@@ -160,7 +162,7 @@ Collect information from the general task, follow the plan from manager to solve
         self.build_history = {}
         self.build_times = 0
 
-    def _run_autobuild(self, group_name: str, execution_task: str, building_task: str = "", use_lingua=False) -> str:
+    def _run_autobuild(self, group_name: str, execution_task: str, building_task: str = "") -> str:
         """
         Build a group of agents by AutoBuild to solve the task.
         This function requires the nested_mode_config to contain the autobuild_init_config,
@@ -180,6 +182,36 @@ Collect information from the general task, follow the plan from manager to solve
                     building_task, **self._nested_mode_config["autobuild_build_config"]
                 )
                 self.build_history[group_name] = agent_configs.copy()
+
+                if self._nested_mode_config.get("autobuild_tool_config", None):
+                    print("==> Retrieving tools...", flush=True)
+                    lines = building_task.split("\n")
+                    skills = [line.split("-", 1)[1].strip() if line.startswith("-") else line.strip() for line in lines]
+                    if len(skills) == 0:
+                        skills = [building_task]
+
+                    # Retrieve and build tools based on the smilarities between the skills and the tool description
+                    tool_builder = ToolBuilder(
+                        corpus_path=self._nested_mode_config["autobuild_tool_config"]["tool_corpus"],
+                        retriever=self._nested_mode_config["autobuild_tool_config"]["retriever"],
+                    )
+                    tool_root_dir = self._nested_mode_config["autobuild_tool_config"]["tool_root"]
+
+                    for idx, skill in enumerate(skills):
+                        tools = tool_builder.retrieve(skill)
+                        docstrings = []
+                        for tool in tools:
+                            category, tool_name = tool.split(" ")[0], tool.split(" ")[1]
+                            tool_path = os.path.join(tool_root_dir, category, f'{tool_name}.py')
+                            docstring = get_full_tool_description(tool_path)
+                            docstrings.append(docstring)
+                        tool_builder.bind(agent_list[idx], "\n\n".join(docstrings))
+                    
+                    # Equip user proxy with the updated tools
+                    if isinstance(agent_list[-1], autogen.UserProxyAgent):
+                        updated_user_proxy = tool_builder.bind_user_proxy(agent_list[-1], tool_root_dir)
+                        agent_list[-1] = updated_user_proxy
+
             else:
                 # Build from scratch
                 agent_list, agent_configs = builder.build(
@@ -215,36 +247,25 @@ Collect information from the general task, follow the plan from manager to solve
         for item in chat_messages:
             chat_history.append(item)
 
-        if use_lingua:
-            llm_lingua = PromptCompressor(
-                model_name="microsoft/phi-2",
-                use_llmlingua2=True,  # Whether to use llmlingua-2
+        # Review the group chat history.
+        summary_model_config_list = autogen.config_list_from_json(
+            builder.config_file_or_env,
+            file_location=builder.config_file_location,
+            filter_dict={"model": [builder.builder_model]},
+        )
+        summary_model = autogen.OpenAIWrapper(config_list=summary_model_config_list)
+        summarized_history = (
+            summary_model.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": self.CONVERSATION_REVIEW_PROMPT.format(chat_history=chat_history),
+                    }
+                ]
             )
-            compressed_prompt = llm_lingua.compress_prompt(
-                [json.dumps(chat_history, indent=4)],
-                instruction="", question="", target_token=200
-            )
-            summarized_history = compressed_prompt['compressed_prompt']
-        else:
-            # Review the group chat history.
-            summary_model_config_list = autogen.config_list_from_json(
-                builder.config_file_or_env,
-                file_location=builder.config_file_location,
-                filter_dict={"model": [builder.builder_model]},
-            )
-            summary_model = autogen.OpenAIWrapper(config_list=summary_model_config_list)
-            summarized_history = (
-                summary_model.create(
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": self.CONVERSATION_REVIEW_PROMPT.format(chat_history=chat_history),
-                        }
-                    ]
-                )
-                .choices[0]
-                .message.content
-            )
+            .choices[0]
+            .message.content
+        )
 
         return f"# Response from seek_agent_help: \n{summarized_history}"
 

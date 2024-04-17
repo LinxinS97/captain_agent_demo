@@ -6,15 +6,15 @@ import os
 import sqlite3
 import threading
 import uuid
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
+
+from openai import AzureOpenAI, OpenAI
+from openai.types.chat import ChatCompletion
 
 from autogen.logger.base_logger import BaseLogger
 from autogen.logger.logger_utils import get_current_ts, to_dict
 
-from openai import OpenAI, AzureOpenAI
-from openai.types.chat import ChatCompletion
-from typing import Any, Dict, List, TYPE_CHECKING, Tuple, Union
 from .base_logger import LLMConfig
-
 
 if TYPE_CHECKING:
     from autogen import ConversableAgent, OpenAIWrapper
@@ -221,7 +221,7 @@ class SqliteLogger(BaseLogger):
 
         args = to_dict(
             init_args,
-            exclude=("self", "__class__", "api_key", "organization", "base_url", "azure_endpoint"),
+            exclude=("self", "__class__", "api_key", "organization", "base_url", "azure_endpoint", "code_execution_config"),
             no_recursive=(Agent,),
         )
 

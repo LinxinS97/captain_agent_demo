@@ -1,6 +1,6 @@
 from typing import Callable, Dict, Literal, Optional, Union
 from autogen import AssistantAgent, ConversableAgent
-from autogen.agentchat.contrib.tool_retriever import ToolRetriever
+from autogen.agentchat.contrib.tool_retriever import ToolBuilder
 import warnings
 
 
@@ -46,7 +46,7 @@ Below is the json schema of the available apis.
                 "tool_config is not set. If you do not intend to use tool-enhanced assistant, please use AssistantAgent instead."
             )
 
-        self.retriever = ToolRetriever(
+        self.retriever = ToolBuilder(
             corpus_tsv_path=tool_config.get("corpus_path", "tools/corpus_dedup.tsv"),
             model_path=tool_config.get("model_path", "ToolIR/"),
             tool_path=tool_config.get("tool_path", "tools/toollib"),
