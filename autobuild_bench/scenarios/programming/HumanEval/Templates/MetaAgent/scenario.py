@@ -45,7 +45,13 @@ nested_mode_config = {
             "timeout": 10,
             "work_dir": work_dir,
         },
-        "coding": True
+        "coding": True,
+        "library_path_or_json": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/agent_library.json",
+    },
+    "autobuild_tool_config": {
+        "tool_corpus": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/tools/tool_description.tsv",
+        "tool_root": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/tools",
+        "retriever": "all-mpnet-base-v2",
     },
     "group_chat_config": {"max_round": 15},
     "group_chat_llm_config": general_llm_config.copy(),

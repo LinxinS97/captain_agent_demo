@@ -160,6 +160,7 @@ Collect information from the general task, follow the plan from manager to solve
         self._nested_mode_config = nested_mode_config.copy()
         self._code_execution_config = code_execution_config
         self.build_history = {}
+        self.tool_history = {}
         self.build_times = 0
 
     def _run_autobuild(self, group_name: str, execution_task: str, building_task: str = "") -> str:
@@ -173,8 +174,20 @@ Collect information from the general task, follow the plan from manager to solve
         print("\n==> Execution task: ", execution_task, flush=True)
 
         builder = AgentBuilder(**self._nested_mode_config["autobuild_init_config"])
+        # load from history
         if group_name in self.build_history.keys():
             agent_list, agent_configs = builder.load(config_json=json.dumps(self.build_history[group_name]))
+            if self._nested_mode_config.get("autobuild_tool_config", None) and agent_configs['coding'] is True:
+                tool_root_dir = self._nested_mode_config["autobuild_tool_config"]["tool_root"]
+                tool_builder = ToolBuilder(
+                    corpus_path=self._nested_mode_config["autobuild_tool_config"]["tool_corpus"],
+                    retriever=self._nested_mode_config["autobuild_tool_config"]["retriever"],
+                )
+                for idx, agent in enumerate(agent_list):
+                    if idx == len(self.tool_history[group_name]):
+                        break
+                    tool_builder.bind(agent, "\n\n".join(self.tool_history[group_name][idx]))
+                agent_list[-1] = tool_builder.bind_user_proxy(agent_list[-1], tool_root_dir)   
         else:
             if self._nested_mode_config["autobuild_build_config"].get('library_path_or_json', None):
                 # Build from retrieval
@@ -183,7 +196,7 @@ Collect information from the general task, follow the plan from manager to solve
                 )
                 self.build_history[group_name] = agent_configs.copy()
 
-                if self._nested_mode_config.get("autobuild_tool_config", None):
+                if self._nested_mode_config.get("autobuild_tool_config", None) and agent_configs['coding'] is True:
                     print("==> Retrieving tools...", flush=True)
                     lines = building_task.split("\n")
                     skills = [line.split("-", 1)[1].strip() if line.startswith("-") else line.strip() for line in lines]
@@ -206,11 +219,12 @@ Collect information from the general task, follow the plan from manager to solve
                             docstring = get_full_tool_description(tool_path)
                             docstrings.append(docstring)
                         tool_builder.bind(agent_list[idx], "\n\n".join(docstrings))
+                        # log tools
+                        tool_history = self.tool_history.get(group_name, [])
+                        tool_history.append(docstrings)
+                        self.tool_history[group_name] = tool_history
                     
-                    # Equip user proxy with the updated tools
-                    if isinstance(agent_list[-1], autogen.UserProxyAgent):
-                        updated_user_proxy = tool_builder.bind_user_proxy(agent_list[-1], tool_root_dir)
-                        agent_list[-1] = updated_user_proxy
+                    agent_list[-1] = tool_builder.bind_user_proxy(agent_list[-1], tool_root_dir)
 
             else:
                 # Build from scratch
@@ -229,7 +243,7 @@ Collect information from the general task, follow the plan from manager to solve
         nested_group_chat = autogen.GroupChat(
             agents=agent_list,
             messages=[],
-            allow_repeat_speaker=agent_list[1:] if agent_configs['coding'] is True else agent_list,
+            allow_repeat_speaker=agent_list[:-1] if agent_configs['coding'] is True else agent_list,
             **self._nested_mode_config["group_chat_config"]
         )
         manager = autogen.GroupChatManager(
