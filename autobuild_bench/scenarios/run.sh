@@ -103,12 +103,12 @@ echo "*********************GAIA*********************"
 cd ../../retrieval/GAIA
 python Scripts/init_tasks.py
 wait
-echo "*********************SciBench/Phy/MetaAgent 1*********************"
+echo "*********************GAIA/MetaAgent 1*********************"
 echo "Yes" | autogenbench run Tasks/gaia_validation_level1__MetaAgent.jsonl --native
 wait
-echo "*********************SciBench/Phy/MetaAgent 2*********************"
+echo "*********************GAIA/MetaAgent 2*********************"
 echo "Yes" | autogenbench run Tasks/gaia_validation_level2__MetaAgent.jsonl --native
 wait
-echo "*********************SciBench/Phy/MetaAgent 3*********************"
+echo "*********************GAIA/MetaAgent 3*********************"
 echo "Yes" | autogenbench run Tasks/gaia_validation_level3__MetaAgent.jsonl --native
 wait

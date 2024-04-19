@@ -14,6 +14,7 @@ TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 DATA_DIR = os.path.join(SCENARIO_DIR, "Downloads")
 SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 
+random.seed(41)
 
 def load_data():
     label_path = os.path.join(DATA_DIR, "reduced-da-dev-labels.jsonl")

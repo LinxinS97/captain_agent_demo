@@ -35,6 +35,7 @@ nested_mode_config = {
             "temperature": 1,
             "top_p": 0.95,
             "max_tokens": 1500,
+            "cache_seed": None,
         },
         "coding": True,
         "library_path_or_json": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/agent_library.json",

@@ -51,6 +51,7 @@ nested_mode_config = {
             "temperature": 1,
             "top_p": 0.95,
             "max_tokens": 1500,
+            "cache_seed": None,
         },
         "coding": True,
         "library_path_or_json": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/agent_library.json",
@@ -65,7 +66,7 @@ nested_mode_config = {
 }
 ## build agents
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
-meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config, nested_mode="autobuild")
+meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config.copy(), nested_mode="autobuild")
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
@@ -111,7 +112,7 @@ You are given:
 Please do the following:
 1. Extract the answer in the reply: "The answer is <answer extracted>".
 2. Check whether the answer in the reply matches the ground truth answer. Only compare the values exist in ground truth answer.
-3. Choose your answer from the following options:
+3. You **must** choose your answer from the following options:
     - "The answer is correct."
     - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."

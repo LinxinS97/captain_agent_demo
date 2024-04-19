@@ -30,7 +30,7 @@ class MetaUserProxyAgent(ConversableAgent):
 
     CONVERSATION_REVIEW_PROMPT = """# Your task
 Briefly summarize the conversation history derive from a experts' group chat by following the answer format.
-If you found contradictions or issues in the conversation, point it out and mark the "Need double-check" as "Yes".
+If you found non-trivial contradictions or issues in the conversation, point it out with a deatiled reason and mark the "Need double-check" as "Yes".
 
 # Conversation history:
 {chat_history}
@@ -56,15 +56,15 @@ If you found contradictions or issues in the conversation, point it out and mark
 """
 
     AUTOBUILD_TASK_DESC = """You are given: (1) a task and advises from your manager with a specific plan and (2) a general task.
-Collect information from the general task, follow the plan from manager to solve the task from manager.
+Collect information from the general task, follow the suggesstions from manager to solve the task.
 
 # General Task
 {general_task}
 
-# Task and advises from manager
+# Task and suggesstions from manager
 {manager_task} """
 
-    DEFAULT_AUTO_REPLY = "Thank you. Please keep solving the problem. If you think the problem is solved, please reply me only with 'TERMINATE'."
+    DEFAULT_AUTO_REPLY = "I'm a proxy and I can only execute your tool or end the conversation. If you think the problem is solved, please reply me only with 'TERMINATE'."
 
     # Default UserProxyAgent.description values, based on human_input_mode
     DEFAULT_USER_PROXY_AGENT_DESCRIPTIONS = {
@@ -198,8 +198,8 @@ Collect information from the general task, follow the plan from manager to solve
 
                 if self._nested_mode_config.get("autobuild_tool_config", None) and agent_configs['coding'] is True:
                     print("==> Retrieving tools...", flush=True)
-                    lines = building_task.split("\n")
-                    skills = [line.split("-", 1)[1].strip() if line.startswith("-") else line.strip() for line in lines]
+                    skills = building_task.split("\n")
+                    # skills = [line.split("-", 1)[1].strip() if line.startswith("-") else line.strip() for line in lines]
                     if len(skills) == 0:
                         skills = [building_task]
 

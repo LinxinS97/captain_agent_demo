@@ -30,7 +30,7 @@ FAST_MODEL = "gpt-3.5-turbo"
 #   The [ \t]* matches the potential spaces before closing ``` (the spec allows indentation).
 CODE_BLOCK_PATTERN = r"```[ \t]*(\w+)?[ \t]*\r?\n(.*?)\r?\n[ \t]*```"
 WORKING_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "extensions")
-UNKNOWN = "unknown"
+UNKNOWN = "Unknown (Do not put anything in ```...``` block without specifing a programming language.)"
 TIMEOUT_MSG = "Timeout"
 DEFAULT_TIMEOUT = 600
 WIN32 = sys.platform == "win32"

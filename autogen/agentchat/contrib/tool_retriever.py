@@ -5,9 +5,12 @@ from autogen.coding import LocalCommandLineCodeExecutor
 from autogen import UserProxyAgent, AssistantAgent
 
 class ToolBuilder:
-    TOOL_USING_PROMPT = """## Functions
-    You have access to the following functions. They can be accessed from the module called 'functions' by their function names.
-For example, if there is a function called `foo` you could import it by writing `from functions import foo`
+    TOOL_USING_PROMPT = """
+
+## Specific Python Functions
+You have the access to the following useful python functions. They can be accessed from the python module called 'functions' by their function names.
+If you want to import the python function called `foo` into your code, you can import it by writing `from functions import foo` in your code block.
+Use them by following the function's instruction if you need.
 
 {functions}
 """

@@ -75,25 +75,32 @@ The tool "seek_experts_help" can build a group of experts according to the build
 
 ## building_task
 This task helps a build manager to build a group of experts for your task.
-You should list some useful and distinghishable skills with the following format.
+You should suggest less then three roles (including a checker for verification) with the following format.
 
-- description for skill 1
-- description for skill 2
-...
+### Format
+- [description for role 1]
+- [description for role 2]
+- [description for checker]
 
 ## execution_task
 This is the task that needs the experts to solve by conversation. 
-You should Provide the following information in markdown format:
-- Your task and plan of how to solve the task.
-- Output format of the task.
-- Constraints and conditions for completion.
-- Examples of the solution.
-- [Optional] results (including code blocks) and reason from last response.
+You should Provide the following information in markdown format.
+
+### Format
+## Task description
+...
+## Plan for solving the task
+...
+## Output format
+...
+## Constraints and conditions for completion
+...
+## [Optional] results (including code blocks) and reason from last response
+...
 
 # After seek_experts_help
 You will receive a comprehensive conclusion from the conversation, including the task information, results, reason for the results, conversation contradiction or issues, and additional information.
-Analyze the result reason and the contradictions in the conversation carefully. 
-You **MUST** conduct a thorough verification for the result and reason's logical compliance by leveraging the step-by-step backward reasoning with the same group of experts (with the same group name) when:
+You **must** conduct a thorough verification for the result and reason's logical compliance by leveraging the step-by-step backward reasoning with the same group of experts (with the same group name) when:
 - The conversation has contradictions or issues (need double-check marked as yes), or
 - The result is different from the previous results.
 
@@ -101,6 +108,7 @@ Note that the previous experts will forget everything after you obtain the respo
 
 # Some useful instructions
 - You only have one tool called "seek_experts_help".
+- Provide a answer yourself after "seek_experts_help".
 - You should suggest python code in a python coding block (```python...```).
 - When using code, you must indicate the script type in the code block.
 - Do not suggest incomplete code which requires users to modify.

@@ -1387,7 +1387,10 @@ class ConversableAgent(LLMAgent):
             # found code blocks, execute code.
             code_result = self._code_executor.execute_code_blocks(code_blocks)
             exitcode2str = "execution succeeded" if code_result.exit_code == 0 else "execution failed"
-            return True, f"exitcode: {code_result.exit_code} ({exitcode2str})\nCode output: {code_result.output}"
+            output = code_result.output
+            if output.strip() == "":
+                output = "No output. Do you forget print()?"
+            return True, f"exitcode: {code_result.exit_code} ({exitcode2str})\nCode output: {output}"
 
         return False, None
 
@@ -2060,6 +2063,8 @@ class ConversableAgent(LLMAgent):
                 # raise NotImplementedError
             if image is not None:
                 self._code_execution_config["use_docker"] = image
+            if logs.strip() == "":
+                logs = "No output. Do you forget print()?"
             logs_all += "\n" + logs
             if exitcode != 0:
                 return exitcode, logs_all

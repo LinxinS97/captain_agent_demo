@@ -41,6 +41,7 @@ nested_mode_config = {
             "temperature": 1,
             "top_p": 0.95,
             "max_tokens": 1500,
+            "cache_seed": None,
         },
         "code_execution_config": {
             "timeout": 300,

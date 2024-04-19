@@ -44,15 +44,15 @@ class AgentBuilder:
 
     online_server_name = "online"
 
-    DEFAULT_PROXY_AUTO_REPLY = 'There is no code for me to execute. Let other participants to continue the conversation. If you want to end the conversation, you should reply me only with "TERMINATE"'
+    DEFAULT_PROXY_AUTO_REPLY = 'There is no code for me to execute. Group chat manager should let other participants to continue the conversation. If the group chat manager want to end the conversation, you should let other participant reply me only with "TERMINATE"'
 
     GROUP_CHAT_DESCRIPTION = """ # Group chat instruction
 You are now working in a group chat with different expert and a group chat manager.
 
-Your name is: {name}
-The members' name: {members}{user_proxy_desc}
+Your are {name}
+Group chat members: {members}{user_proxy_desc}
 
-The group chat manager will select the speaker who can speak at the current time, but if there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
+If there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
 When the task is complete and the result has been carefully verified, after obtaining agreement from the other members, you can end the conversation by replying only with "TERMINATE".
 
 # Your profile
@@ -69,24 +69,20 @@ When the task is complete and the result has been carefully verified, after obta
 """
 
     CODING_AND_TASK_SKILL_INSTRUCTION = """## Useful instructions for task-solving
-- Follow the instruction provided by the user.
 - Solve the task step by step if you need to.
-- If a plan is not provided, explain your plan first.
-- If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
-- When you find an answer, verify the answer carefully. 
-- Include verifiable evidence in your response if possible.
+- When you find an answer, verify the answer carefully. Include verifiable evidence with possible test case in your response if possible.
+- All your reply should be based on the provided facts.
+- If you find a contradiction in the dialog, you should challenge it and let the member provide sufficient evidence to clarify it.
     
 ## How to use code?
 - Suggest python code (in a python coding block) or shell script (in a sh coding block) for the Computer_terminal to execute.
-- When using code, you must indicate the script type in the code block.
-- Do not suggest incomplete code which requires users to modify.
-- Last results will not be cached, so you need to provide all the necessary information in one code block.
-- Do not use a code block if it's not intended to be executed by the Computer_terminal.
-- The Computer_terminal cannot provide any other feedback or perform any other action beyond executing the code you suggest. 
-- The Computer_terminal can't modify your code.
-- Use 'print' function for the output when relevant. 
-- Check the execution result returned by the user.
-- Do not ask users to copy and paste the result.
+- When using code, you must indicate the script type in the coding block.
+- Do not the coding block which requires users to modify.
+- Do not suggest a coding block if it's not intended to be executed by the Computer_terminal.
+- The Computer_terminal cannot modify your code.
+- **Use 'print' function for the output when relevant**. 
+- Check the execution result returned by the Computer_terminal.
+- Do not ask Computer_terminal to copy and paste the result.
 - If the result indicates there is an error, fix the error and output the code again. 
 - If you want the Computer_terminal to save the code in a file before executing it, put # filename: <filename> inside the code block as the first line. """
 
@@ -626,8 +622,8 @@ Match roles in the role set to each expert in expert set.
             raise e
 
         print(colored("==> Looking for suitable agents in the library...", "green"), flush=True)
-        lines = building_task.split("\n")
-        skills = [line.split("-", 1)[1].strip() if line.startswith("-") else line for line in lines]
+        skills = building_task.split("\n")
+        # skills = [line.split("-", 1)[1].strip() if line.startswith("-") else line for line in lines]
         if len(skills) == 0:
             skills = [building_task]
         
