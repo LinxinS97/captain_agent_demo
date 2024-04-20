@@ -19,6 +19,7 @@ SCRIPT_NAME = os.path.basename(SCRIPT_PATH)
 SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
 
 TASK_TIMEOUT = 60 * 30  # 30 minutes
+RETRY = 3 # 3 times auto-retry
 
 BASE_TEMPLATE_PATH = os.path.join(SCRIPT_DIR, "template")
 RESOURCES_PATH = os.path.join(SCRIPT_DIR, "res")
@@ -354,16 +355,23 @@ echo RUN.SH COMPLETE !#!#
         )
 
     # Run the script and log the output
-    with open("console_log.txt", "wb") as f:
-        process = subprocess.Popen(
-            ["sh", "run.sh"],
-            env=full_env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        for c in iter(lambda: process.stdout.read(1), b""):
-            f.write(c)
-            os.write(sys.stdout.fileno(), c)  # Write binary to stdout
+    t = 0
+    while t < RETRY:
+        with open("console_log.txt", "wb") as f:
+            process = subprocess.Popen(
+                ["sh", "run.sh"],
+                env=full_env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            for c in iter(lambda: process.stdout.read(1), b""):
+                f.write(c)
+                os.write(sys.stdout.fileno(), c)  # Write binary to stdout
+        with open("console_log.txt", "r") as f:
+            if "RUN.SH COMPLETE !#!#\n" in f.readlines():
+                break
+            else:
+                print("RUN.SH COMPLETE !#!# not found in console_log.txt, retring...", flush=True)
 
     # Return where we started
     os.chdir(cwd)
