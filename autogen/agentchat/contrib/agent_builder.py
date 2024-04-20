@@ -8,7 +8,7 @@ import re
 import importlib
 import logging
 from termcolor import colored
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +72,12 @@ When the task is complete and the result has been carefully verified, after obta
 - Solve the task step by step if you need to.
 - When you find an answer, verify the answer carefully. Include verifiable evidence with possible test case in your response if possible.
 - All your reply should be based on the provided facts.
-- If you find a contradiction in the dialog, you should challenge it and let the member provide sufficient evidence to clarify it.
-    
+
+## How to verify?
+**You have to keep believing that everyone else's answers are wrong until they provide clear enough evidence.**
+- Verifying with step-by-step backward reasoning.
+- Write test cases according to the general task.
+
 ## How to use code?
 - Suggest python code (in a python coding block) or shell script (in a sh coding block) for the Computer_terminal to execute.
 - When using code, you must indicate the script type in the coding block.
@@ -169,8 +173,8 @@ Match roles in the role set to each expert in expert set.
         self,
         config_file_or_env: Optional[str] = "OAI_CONFIG_LIST",
         config_file_location: Optional[str] = "",
-        builder_model: Optional[str] = "gpt-4",
-        agent_model: Optional[str] = "gpt-4",
+        builder_model: Optional[Union[str, list]] = "gpt-4",
+        agent_model: Optional[Union[str, list]] = "gpt-4",
         host: Optional[str] = "localhost",
         endpoint_building_timeout: Optional[int] = 600,
         max_agents: Optional[int] = 5,
@@ -186,8 +190,8 @@ Match roles in the role set to each expert in expert set.
             max_agents: max agents for each task.
         """
         self.host = host
-        self.builder_model = builder_model
-        self.agent_model = agent_model
+        self.builder_model = builder_model if isinstance(builder_model, list) else [builder_model]
+        self.agent_model = agent_model if isinstance(agent_model, list) else [agent_model]
         self.config_file_or_env = config_file_or_env
         self.config_file_location = config_file_location
         self.endpoint_building_timeout = endpoint_building_timeout
@@ -253,7 +257,7 @@ Match roles in the role set to each expert in expert set.
         from huggingface_hub import HfApi
         from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
 
-        model_name_or_hf_repo = agent_config['model']
+        model_name_or_hf_repo = agent_config['model'] if isinstance(agent_config['model'], list) else [agent_config['model']]
         agent_name = agent_config['name']
         system_message = agent_config['system_message']
         description = agent_config['description']
@@ -264,7 +268,7 @@ Match roles in the role set to each expert in expert set.
         config_list = autogen.config_list_from_json(
             self.config_file_or_env,
             file_location=self.config_file_location,
-            filter_dict={"model": [model_name_or_hf_repo]},
+            filter_dict={"model": model_name_or_hf_repo},
         )
         if len(config_list) == 0:
             raise RuntimeError(
@@ -274,7 +278,7 @@ Match roles in the role set to each expert in expert set.
             )
         try:
             hf_api = HfApi()
-            hf_api.model_info(model_name_or_hf_repo)
+            hf_api.model_info(model_name_or_hf_repo[0])
             model_name = model_name_or_hf_repo.split("/")[-1]
             server_id = f"{model_name}_{self.host}"
         except GatedRepoError as e:
@@ -340,7 +344,7 @@ Match roles in the role set to each expert in expert set.
 
         current_config = llm_config.copy()
         current_config.update(
-            {"config_list": config_list, "model": model_name_or_hf_repo}
+            {"config_list": config_list}
         )
         if use_oai_assistant:
             from autogen.agentchat.contrib.gpt_assistant_agent import GPTAssistantAgent
@@ -460,7 +464,7 @@ Match roles in the role set to each expert in expert set.
         config_list = autogen.config_list_from_json(
             self.config_file_or_env,
             file_location=self.config_file_location,
-            filter_dict={"model": [self.builder_model]},
+            filter_dict={"model": self.builder_model},
         )
         if len(config_list) == 0:
             raise RuntimeError(
@@ -604,7 +608,7 @@ Match roles in the role set to each expert in expert set.
         config_list = autogen.config_list_from_json(
             self.config_file_or_env,
             file_location=self.config_file_location,
-            filter_dict={"model": [self.builder_model]},
+            filter_dict={"model": self.builder_model},
         )
         if len(config_list) == 0:
             raise RuntimeError(

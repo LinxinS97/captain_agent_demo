@@ -22,13 +22,13 @@ with open("expected_answer.txt", "rt") as fh:
 # Task parameters
 general_llm_config = {
     "temperature": 0,
-    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106"]}),
+    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_1", filter_dict={"model": ["gpt-4-1106""gpt-4-0125-preview", "gpt-4-turbo"]}),
 }
 nested_mode_config = {
     "autobuild_init_config": {
-        "config_file_or_env": "OAI_CONFIG_LIST",
-        "builder_model": "gpt-4-1106",
-        "agent_model": "gpt-4-1106",
+        "config_file_or_env": "OAI_CONFIG_LIST_1",
+        "builder_model": ["gpt-4-1106""gpt-4-0125-preview", "gpt-4-turbo"],
+        "agent_model": ["gpt-4-1106""gpt-4-0125-preview", "gpt-4-turbo"],
     },
     "autobuild_build_config": {
         "default_llm_config": {

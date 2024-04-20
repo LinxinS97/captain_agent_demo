@@ -47,11 +47,10 @@ class MetaAgent(ConversableAgent):
                     },
                     "execution_task": {
                         "type": "string",
-                        "description": """The task that needs the experts to solve by conversation.""",
+                        "description": """[REQUIRED] The task that needs the experts to solve by conversation.""",
                     }
                 },
             },
-            "required": ["group_name", "building_task", "execution_task"],
         },
     }
 
