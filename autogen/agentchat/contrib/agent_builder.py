@@ -44,7 +44,7 @@ class AgentBuilder:
 
     online_server_name = "online"
 
-    DEFAULT_PROXY_AUTO_REPLY = 'There is no code for me to execute. Group chat manager should let other participants to continue the conversation. If the group chat manager want to end the conversation, you should let other participant reply me only with "TERMINATE"'
+    DEFAULT_PROXY_AUTO_REPLY = 'There is no code from the last 1 message for me to execute. Group chat manager should let other participants to continue the conversation. If the group chat manager want to end the conversation, you should let other participant reply me only with "TERMINATE"'
 
     GROUP_CHAT_DESCRIPTION = """ # Group chat instruction
 You are now working in a group chat with different expert and a group chat manager.
