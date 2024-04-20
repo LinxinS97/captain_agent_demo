@@ -66,7 +66,7 @@ meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config, nested_
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
-    code_execution_config={"use_docker": False}, # you can modify the setting
+    code_execution_config={"use_docker": False, 'work_dir': 'coding'}, # you can modify the setting
     # modify the path
     agent_config_save_path="__AGENT_SAVE_PATH__"
 )
