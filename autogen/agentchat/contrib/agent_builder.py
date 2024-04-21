@@ -87,8 +87,7 @@ When the task is complete and the result has been carefully verified, after obta
 - **Use 'print' function for the output when relevant**. 
 - Check the execution result returned by the Computer_terminal.
 - Do not ask Computer_terminal to copy and paste the result.
-- If the result indicates there is an error, fix the error and output the code again. 
-- If you want the Computer_terminal to save the code in a file before executing it, put # filename: <filename> inside the code block as the first line. """
+- If the result indicates there is an error, fix the error and output the code again. """
 
     CODING_PROMPT = """Does the following task need programming (i.e., access external API or tool by coding) to solve,
 or coding may help the following task become easier?
