@@ -1,8 +1,8 @@
 -e file:///home/ubuntu/disklinxin/llm/autogen-autobuild-dev
 huggingface_hub
 retry
-llmlingua
 pandas
 sympy
 matplotlib
 numpy
+sentence_transformer
