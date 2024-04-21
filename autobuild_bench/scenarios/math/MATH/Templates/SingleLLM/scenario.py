@@ -17,7 +17,7 @@ with open("expected_answer.txt", "rt") as fh:
 ####################
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
 
-config_list = autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106"]})
+config_list = autogen.config_list_from_json("__CONFIG_LIST_PATH__", filter_dict={"model": ["gpt-4-1106", "gpt-4-0125-preview", "gpt-4-1106-preview"]})
 llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
 question = """Please solve the following math problem: 

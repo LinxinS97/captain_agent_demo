@@ -19,13 +19,13 @@ with open("expected_answer.txt", "rt") as fh:
 ## Task parameters
 general_llm_config = {
     "temperature": 0,
-    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_1", filter_dict={"model": ["gpt-4-1106", "gpt-4-0125-preview"]}),
+    "config_list": autogen.config_list_from_json("__CONFIG_LIST_PATH__", filter_dict={"model": ["gpt-4-1106", "gpt-4-0125-preview", "gpt-4-1106-preview"]}),
 }
 nested_mode_config = {
     "autobuild_init_config": {
-        "config_file_or_env": "OAI_CONFIG_LIST_1",
-        "builder_model": ["gpt-4-1106", "gpt-4-0125-preview"],
-        "agent_model": ["gpt-4-1106", "gpt-4-0125-preview"],
+        "config_file_or_env": "__CONFIG_LIST_PATH__",
+        "builder_model": ["gpt-4-1106", "gpt-4-0125-preview", "gpt-4-1106-preview"],
+        "agent_model": ["gpt-4-1106", "gpt-4-0125-preview", "gpt-4-1106-preview"],
         "max_agents": 5,
     },
     "autobuild_build_config": {
@@ -36,11 +36,11 @@ nested_mode_config = {
             "cache_seed": None,
         },
         "coding": True,
-        "library_path_or_json": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/agent_library.json",
+        "library_path_or_json": "__LIBRARY_PATH__",
     },
     "autobuild_tool_config": {
-        "tool_corpus": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/tools/tool_description.tsv",
-        "tool_root": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/tools",
+        "tool_corpus": "__TOOL_CORPUS__",
+        "tool_root": "__TOOL_ROOT__",
         "retriever": "all-mpnet-base-v2",
     },
     "group_chat_config": {"max_round": 15},
