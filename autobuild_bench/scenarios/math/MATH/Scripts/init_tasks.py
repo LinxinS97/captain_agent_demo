@@ -136,7 +136,7 @@ They need to solve the problem collaboratively and check each other's answer. Al
     }
 
     ## build agents
-    builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
+    builder = AgentBuilder(config_file_or_env=args.config_list,
                            builder_model=["gpt-4-1106", "gpt-4-0125-preview", "gpt-4-1106-preview"],
                            agent_model=["gpt-4-1106", "gpt-4-0125-preview", "gpt-4-1106-preview"],
                            max_agents=10)
