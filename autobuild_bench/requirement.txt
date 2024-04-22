@@ -1,7 +1,7 @@
+sentence_transformers
 huggingface_hub
 retry
 pandas
 sympy
 matplotlib
 numpy
-sentence_transformers
