@@ -71,7 +71,7 @@ def download_math():
     tar = tarfile.open(tar_file)
     for member in tar.getmembers():
         # if member.name in SELECTED_PROBLEMS:
-        if ".json" in member.name:
+        if ".json" in member.name and "test" in member.name:
             # print(f"Extracting: {member.name}")
             content = tar.extractfile(member).read()
             selected_problems[member.name] = json.loads(content)
