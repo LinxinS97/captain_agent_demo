@@ -4,4 +4,4 @@ pandas
 sympy
 matplotlib
 numpy
-sentence_transformer
+sentence_transformers
