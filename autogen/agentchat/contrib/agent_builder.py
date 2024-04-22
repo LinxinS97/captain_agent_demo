@@ -594,7 +594,18 @@ Match roles in the role set to each expert in expert set.
             cached_configs: cached configs.
         """
         import chromadb
+        import sqlite3
         from chromadb.utils import embedding_functions
+        
+        # Some system will have an unexcepted sqlite3 version. 
+        # Check if the user has installed pysqlite3.
+        if int(sqlite3.version.split('.')) < 3:
+            try:
+                __import__('pysqlite3')
+                import sys
+                sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+            except Exception as e:
+                raise e
 
         if code_execution_config is None:
             code_execution_config = {
