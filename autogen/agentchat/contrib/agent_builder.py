@@ -172,8 +172,10 @@ Match roles in the role set to each expert in expert set.
         self,
         config_file_or_env: Optional[str] = "OAI_CONFIG_LIST",
         config_file_location: Optional[str] = "",
-        builder_model: Optional[Union[str, list]] = "gpt-4",
-        agent_model: Optional[Union[str, list]] = "gpt-4",
+        builder_model: Optional[Union[str, list]] = "gpt-4-turbo",
+        agent_model: Optional[Union[str, list]] = "gpt-4-turbo",
+        builder_model_tags: Optional[Union[str, list]] = [],
+        agent_model_tags: Optional[Union[str, list]] = [],
         host: Optional[str] = "localhost",
         endpoint_building_timeout: Optional[int] = 600,
         max_agents: Optional[int] = 5,
@@ -191,6 +193,8 @@ Match roles in the role set to each expert in expert set.
         self.host = host
         self.builder_model = builder_model if isinstance(builder_model, list) else [builder_model]
         self.agent_model = agent_model if isinstance(agent_model, list) else [agent_model]
+        self.builder_model_tags = builder_model_tags
+        self.agent_model_tags = agent_model_tags
         self.config_file_or_env = config_file_or_env
         self.config_file_location = config_file_location
         self.endpoint_building_timeout = endpoint_building_timeout
@@ -257,6 +261,7 @@ Match roles in the role set to each expert in expert set.
         from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
 
         model_name_or_hf_repo = agent_config['model'] if isinstance(agent_config['model'], list) else [agent_config['model']]
+        model_tags = agent_config.get('tags', [])
         agent_name = agent_config['name']
         system_message = agent_config['system_message']
         description = agent_config['description']
@@ -267,7 +272,10 @@ Match roles in the role set to each expert in expert set.
         config_list = autogen.config_list_from_json(
             self.config_file_or_env,
             file_location=self.config_file_location,
-            filter_dict={"model": model_name_or_hf_repo},
+            filter_dict={
+                "model": model_name_or_hf_repo,
+                "tags": model_tags
+            },
         )
         if len(config_list) == 0:
             raise RuntimeError(
@@ -372,7 +380,7 @@ Match roles in the role set to each expert in expert set.
                 system_message = model_class().system_message
                 
             additional_config = {
-                k: v for k, v in agent_config.items() if k not in ['model', 'name', 'system_message', 'description', 'model_path']
+                k: v for k, v in agent_config.items() if k not in ['model', 'name', 'system_message', 'description', 'model_path', 'tags']
             }
             enhanced_sys_msg = self.GROUP_CHAT_DESCRIPTION.format(
                 name=agent_name, 
@@ -463,7 +471,10 @@ Match roles in the role set to each expert in expert set.
         config_list = autogen.config_list_from_json(
             self.config_file_or_env,
             file_location=self.config_file_location,
-            filter_dict={"model": self.builder_model},
+            filter_dict={
+                "model": self.builder_model,
+                "tags": self.builder_model_tags
+            },
         )
         if len(config_list) == 0:
             raise RuntimeError(
@@ -533,6 +544,7 @@ Match roles in the role set to each expert in expert set.
                 {
                     "name": name,
                     "model": self.agent_model,
+                    "tags": self.agent_model_tags,
                     "system_message": sys_msg,
                     "description": description,
                 }
@@ -617,7 +629,10 @@ Match roles in the role set to each expert in expert set.
         config_list = autogen.config_list_from_json(
             self.config_file_or_env,
             file_location=self.config_file_location,
-            filter_dict={"model": self.builder_model},
+            filter_dict={
+                "model": self.builder_model,
+                "tags": self.builder_model_tags
+            },
         )
         if len(config_list) == 0:
             raise RuntimeError(
