@@ -177,8 +177,6 @@ Match roles in the role set to each expert in expert set.
         agent_model: Optional[Union[str, list]] = [],
         builder_model_tags: Optional[list] = [],
         agent_model_tags: Optional[list] = [],
-        host: Optional[str] = "localhost",
-        endpoint_building_timeout: Optional[int] = 600,
         max_agents: Optional[int] = 5,
     ):
         """
@@ -191,7 +189,6 @@ Match roles in the role set to each expert in expert set.
             endpoint_building_timeout: timeout for building up an endpoint server.
             max_agents: max agents for each task.
         """
-        self.host = host
         builder_model = builder_model if isinstance(builder_model, list) else [builder_model]        
         builder_filter_dict = {}
         if len(builder_model) != 0:
@@ -213,7 +210,6 @@ Match roles in the role set to each expert in expert set.
         self.agent_model_tags = agent_model_tags
         self.config_file_or_env = config_file_or_env
         self.config_file_location = config_file_location
-        self.endpoint_building_timeout = endpoint_building_timeout
 
         self.building_task: str = None
         self.agent_configs: List[Dict] = []
@@ -252,7 +248,6 @@ Match roles in the role set to each expert in expert set.
         member_name: List[str],
         llm_config: dict,
         use_oai_assistant: Optional[bool] = False,
-        world_size: Optional[int] = 1,
     ) -> autogen.AssistantAgent:
         """
         Create a group chat participant agent.
@@ -273,8 +268,6 @@ Match roles in the role set to each expert in expert set.
         Returns:
             agent: a set-up agent.
         """
-        from huggingface_hub import HfApi
-        from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
 
         model_name_or_hf_repo = agent_config['model'] if isinstance(agent_config['model'], list) else [agent_config['model']]
         model_tags = agent_config.get('tags', [])
@@ -300,74 +293,7 @@ Match roles in the role set to each expert in expert set.
                 f'If you would like to change this model, please specify the "agent_model" in the constructor.\n'
                 f"If you load configs from json, make sure the model in agent_configs is in the {self.config_file_or_env}."
             )
-        try:
-            hf_api = HfApi()
-            hf_api.model_info(model_name_or_hf_repo[0])
-            model_name = model_name_or_hf_repo.split("/")[-1]
-            server_id = f"{model_name}_{self.host}"
-        except GatedRepoError as e:
-            raise e
-        except RepositoryNotFoundError:
-            server_id = self.online_server_name
-        except requests.exceptions.HTTPError:
-            server_id = self.online_server_name
-
-        if server_id != self.online_server_name:
-            # The code in this block is uncovered by tests because online environment does not support gpu use.
-            if self.agent_procs.get(server_id, None) is None:
-                while True:
-                    port = self.open_ports.pop()
-                    if self._is_port_open(self.host, port):
-                        break
-
-                # Use vLLM to set up a server with OpenAI API support.
-                agent_proc = sp.Popen(
-                    [
-                        "python",
-                        "-m",
-                        "vllm.entrypoints.openai.api_server",
-                        "--host",
-                        f"{self.host}",
-                        "--port",
-                        f"{port}",
-                        "--model",
-                        f"{model_name_or_hf_repo}",
-                        "--tensor-parallel-size",
-                        f"{world_size}",
-                    ],
-                    stdout=sp.PIPE,
-                    stderr=sp.STDOUT,
-                )
-                timeout_start = time.time()
-
-                while True:
-                    server_stdout = agent_proc.stdout.readline()
-                    if server_stdout != b"":
-                        print(server_stdout, flush=True)
-                    timeout_end = time.time()
-                    if b"running" in server_stdout:
-                        print(
-                            f"Running {model_name_or_hf_repo} on http://{self.host}:{port} "
-                            f"with tensor parallel size {world_size}.",
-                            flush=True
-                        )
-                        break
-                    elif b"address already in use" in server_stdout:
-                        raise RuntimeError(
-                            f"{self.host}:{port} already in use. Fail to set up the endpoint for "
-                            f"{model_name_or_hf_repo} on {self.host}:{port}."
-                        )
-                    elif timeout_end - timeout_start > self.endpoint_building_timeout:
-                        raise RuntimeError(
-                            f"Timeout exceed. Fail to set up the endpoint for "
-                            f"{model_name_or_hf_repo} on {self.host}:{port}."
-                        )
-                self.agent_procs[server_id] = (agent_proc, port)
-            else:
-                port = self.agent_procs[server_id][1]
-
-            config_list[0]["base_url"] = f"http://{self.host}:{port}/v1"
-
+        server_id = self.online_server_name
         current_config = llm_config.copy()
         current_config.update(
             {"config_list": config_list}
