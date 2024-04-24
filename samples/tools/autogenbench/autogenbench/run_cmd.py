@@ -368,10 +368,10 @@ echo RUN.SH COMPLETE !#!#
                 f.write(c)
                 os.write(sys.stdout.fileno(), c)  # Write binary to stdout
         with open("console_log.txt", "r") as f:
-            if "RUN.SH COMPLETE !#!#\n" in f.readlines():
-                break
+            if "SCENARIO.PY EXITED WITH CODE: 143 !#!#\n" in f.readlines():
+                print("SCENARIO.PY EXITED WITH CODE: 143 !#!# not found in console_log.txt, retring...", flush=True)
             else:
-                print("RUN.SH COMPLETE !#!# not found in console_log.txt, retring...", flush=True)
+                break
 
     # Return where we started
     os.chdir(cwd)
