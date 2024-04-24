@@ -185,7 +185,6 @@ Match roles in the role set to each expert in expert set.
             config_file_or_env: path or environment of the OpenAI api configs.
             builder_model: specify a model as the backbone of build manager.
             agent_model: specify a model as the backbone of participant agents.
-            host: endpoint host.
             endpoint_building_timeout: timeout for building up an endpoint server.
             max_agents: max agents for each task.
         """
@@ -220,27 +219,11 @@ Match roles in the role set to each expert in expert set.
 
         self.max_agents = max_agents
 
-        for port in range(8000, 65535):
-            if self._is_port_open(host, port):
-                self.open_ports.append(str(port))
-
     def set_builder_model(self, model: str):
         self.builder_model = model
 
     def set_agent_model(self, model: str):
         self.agent_model = model
-
-    @staticmethod
-    def _is_port_open(host, port):
-        """Check if a tcp port is open."""
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(10)
-            s.bind((host, int(port)))
-            s.close()
-            return True
-        except OSError:
-            return False
 
     def _create_agent(
         self,
