@@ -7,6 +7,7 @@ import hashlib
 import re
 import importlib
 import logging
+import requests
 from termcolor import colored
 from typing import Optional, List, Dict, Tuple, Union
 
@@ -291,6 +292,8 @@ Match roles in the role set to each expert in expert set.
         except GatedRepoError as e:
             raise e
         except RepositoryNotFoundError:
+            server_id = self.online_server_name
+        except requests.exceptions.HTTPError:
             server_id = self.online_server_name
 
         if server_id != self.online_server_name:
