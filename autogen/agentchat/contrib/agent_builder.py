@@ -173,10 +173,10 @@ Match roles in the role set to each expert in expert set.
         self,
         config_file_or_env: Optional[str] = "OAI_CONFIG_LIST",
         config_file_location: Optional[str] = "",
-        builder_model: Optional[Union[str, list]] = "gpt-4-turbo",
-        agent_model: Optional[Union[str, list]] = "gpt-4-turbo",
-        builder_model_tags: Optional[Union[str, list]] = [],
-        agent_model_tags: Optional[Union[str, list]] = [],
+        builder_model: Optional[Union[str, list]] = [],
+        agent_model: Optional[Union[str, list]] = [],
+        builder_model_tags: Optional[list] = [],
+        agent_model_tags: Optional[list] = [],
         host: Optional[str] = "localhost",
         endpoint_building_timeout: Optional[int] = 600,
         max_agents: Optional[int] = 5,
@@ -192,9 +192,24 @@ Match roles in the role set to each expert in expert set.
             max_agents: max agents for each task.
         """
         self.host = host
-        self.builder_model = builder_model if isinstance(builder_model, list) else [builder_model]
+        builder_model = builder_model if isinstance(builder_model, list) else [builder_model]        
+        builder_filter_dict = {}
+        if len(builder_model) != 0:
+            builder_filter_dict.update({"model": builder_model})
+        if len(builder_model_tags) != 0:
+            builder_filter_dict.update({"tags": builder_model_tags})
+        builder_config_list = autogen.config_list_from_json(
+            config_file_or_env, config_file_location,
+            filter_dict=builder_filter_dict
+        )
+        if len(builder_config_list) == 0:
+            raise RuntimeError(
+                f"Fail to initialize build manager: {self.builder_model}{builder_model_tags} does not exist in {self.config_file_or_env}. "
+                f'If you want to change this model, please specify the "builder_model" in the constructor.'
+            )
+        self.builder_model = autogen.OpenAIWrapper(config_list=builder_config_list)
+        
         self.agent_model = agent_model if isinstance(agent_model, list) else [agent_model]
-        self.builder_model_tags = builder_model_tags
         self.agent_model_tags = agent_model_tags
         self.config_file_or_env = config_file_or_env
         self.config_file_location = config_file_location
@@ -269,18 +284,19 @@ Match roles in the role set to each expert in expert set.
 
         # Path to the customize **ConversableAgent** class.
         model_path = agent_config.get('model_path', None)
-
+        filter_dict = {}
+        if len(model_name_or_hf_repo) > 0:
+            filter_dict.update({"model": model_name_or_hf_repo})
+        if len(model_tags) > 0:
+            filter_dict.update({"tags": model_tags})
         config_list = autogen.config_list_from_json(
             self.config_file_or_env,
             file_location=self.config_file_location,
-            filter_dict={
-                "model": model_name_or_hf_repo,
-                "tags": model_tags
-            },
+            filter_dict=filter_dict
         )
         if len(config_list) == 0:
             raise RuntimeError(
-                f"Fail to initialize agent {agent_name}: {model_name_or_hf_repo} does not exist in {self.config_file_or_env}.\n"
+                f"Fail to initialize agent {agent_name}: {model_name_or_hf_repo}{model_tags} does not exist in {self.config_file_or_env}.\n"
                 f'If you would like to change this model, please specify the "agent_model" in the constructor.\n'
                 f"If you load configs from json, make sure the model in agent_configs is in the {self.config_file_or_env}."
             )
@@ -471,24 +487,9 @@ Match roles in the role set to each expert in expert set.
         agent_configs = []
         self.building_task = building_task
 
-        config_list = autogen.config_list_from_json(
-            self.config_file_or_env,
-            file_location=self.config_file_location,
-            filter_dict={
-                "model": self.builder_model,
-                "tags": self.builder_model_tags
-            },
-        )
-        if len(config_list) == 0:
-            raise RuntimeError(
-                f"Fail to initialize build manager: {self.builder_model} does not exist in {self.config_file_or_env}. "
-                f'If you want to change this model, please specify the "builder_model" in the constructor.'
-            )
-        build_manager = autogen.OpenAIWrapper(config_list=config_list)
-
         print(colored("==> Generating agents...", "green"), flush=True)
         resp_agent_name = (
-            build_manager.create(
+            self.builder_model.create(
                 messages=[
                     {
                         "role": "user",
@@ -507,7 +508,7 @@ Match roles in the role set to each expert in expert set.
         for name in agent_name_list:
             print(f"Preparing system message for {name}", flush=True)
             resp_agent_sys_msg = (
-                build_manager.create(
+                self.builder_model.create(
                     messages=[
                         {
                             "role": "user",
@@ -529,7 +530,7 @@ Match roles in the role set to each expert in expert set.
         for name, sys_msg in list(zip(agent_name_list, agent_sys_msg_list)):
             print(f"Preparing description for {name}", flush=True)
             resp_agent_description = (
-                build_manager.create(
+                self.builder_model.create(
                     messages=[
                         {
                             "role": "user",
@@ -555,7 +556,7 @@ Match roles in the role set to each expert in expert set.
 
         if coding is None:
             resp = (
-                build_manager.create(
+                self.builder_model.create(
                     messages=[{"role": "user", "content": self.CODING_PROMPT.format(task=building_task)}]
                 )
                 .choices[0]
@@ -629,21 +630,6 @@ Match roles in the role set to each expert in expert set.
                 "timeout": 120,
             }
 
-        config_list = autogen.config_list_from_json(
-            self.config_file_or_env,
-            file_location=self.config_file_location,
-            filter_dict={
-                "model": self.builder_model,
-                "tags": self.builder_model_tags
-            },
-        )
-        if len(config_list) == 0:
-            raise RuntimeError(
-                f"Fail to initialize build manager: {self.builder_model} does not exist in {self.config_file_or_env}. "
-                f'If you want to change this model, please specify the "builder_model" in the constructor.'
-            )
-        build_manager = autogen.OpenAIWrapper(config_list=config_list)
-
         try:
             agent_library = json.loads(library_path_or_json)
         except json.decoder.JSONDecodeError:
@@ -687,7 +673,7 @@ Match roles in the role set to each expert in expert set.
         expert_pool = [f"{agent['name']}: {agent['description']}" for agent in agent_config_list]
         while True:
             skill_agent_pair_json = (
-                build_manager.create(
+                self.builder_model.create(
                     messages=[{
                         "role": "user", 
                         "content": self.AGENT_SELECTION_PROMPT.format(
@@ -738,7 +724,7 @@ Match roles in the role set to each expert in expert set.
 
         if coding is None:
             resp = (
-                build_manager.create(
+                self.builder_model.create(
                     messages=[{"role": "user", "content": self.CODING_PROMPT.format(task=building_task)}]
                 )
                 .choices[0]

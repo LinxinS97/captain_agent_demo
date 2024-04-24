@@ -137,9 +137,7 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     ## build agents
     builder = AgentBuilder(config_file_or_env=args.config_list,
-                           builder_model=["gpt-4-1106", "gpt-4-0125-preview", "gpt-4-1106-preview"],
                            builder_model_tags=['gpt-4', '1106', '0125'],
-                           agent_model=["gpt-4-1106", "gpt-4-0125-preview", "gpt-4-1106-preview"],
                            agent_model_tags=['gpt-4', '1106', '0125'],
                            max_agents=10)
     _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
