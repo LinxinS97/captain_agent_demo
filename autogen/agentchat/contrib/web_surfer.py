@@ -27,7 +27,7 @@ class WebSurferAgent(ConversableAgent):
 
     def __init__(
         self,
-        name: str,
+        name: str = "WebServer",
         system_message: Optional[Union[str, List[str]]] = DEFAULT_PROMPT,
         description: Optional[str] = DEFAULT_DESCRIPTION,
         is_termination_msg: Optional[Callable[[Dict[str, Any]], bool]] = None,

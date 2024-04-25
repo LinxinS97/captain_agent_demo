@@ -46,7 +46,7 @@ class SimpleTextBrowser:
         self.viewport_current_page = 0
         self.viewport_pages: List[Tuple[int, int]] = list()
         self.set_address(self.start_page)
-        self.bing_api_key = bing_api_key
+        self.bing_api_key = bing_api_key if bing_api_key is not None else os.environ.get("BING_API_KEY")
         self.request_kwargs = request_kwargs
 
         self._page_content = ""
@@ -125,7 +125,7 @@ class SimpleTextBrowser:
 
     def _bing_api_call(self, query: str) -> Dict[str, Dict[str, List[Dict[str, Union[str, Dict[str, str]]]]]]:
         # Make sure the key was set
-        if self.bing_api_key is None:
+        if self.bing_api_key is None or self.bing_api_key == "":
             raise ValueError("Missing Bing API key.")
 
         # Prepare the request parameters

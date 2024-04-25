@@ -7,6 +7,7 @@ import logging
 import re
 from collections import defaultdict
 from functools import partial
+import traceback
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union
 import warnings
 from openai import BadRequestError
@@ -2139,6 +2140,7 @@ class ConversableAgent(LLMAgent):
                     content = func(**arguments)
                     is_exec_success = True
                 except Exception as e:
+                    traceback.print_exc()
                     content = f"Error: {e}"
         else:
             content = f"Error: Function {func_name} not found."

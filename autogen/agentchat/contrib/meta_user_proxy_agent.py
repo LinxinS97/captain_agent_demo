@@ -262,12 +262,7 @@ Collect information from the general task, follow the suggesstions from manager 
             chat_history.append(item)
 
         # Review the group chat history.
-        summary_model_config_list = autogen.config_list_from_json(
-            builder.config_file_or_env,
-            file_location=builder.config_file_location,
-            filter_dict={"model": builder.builder_model},
-        )
-        summary_model = autogen.OpenAIWrapper(config_list=summary_model_config_list)
+        summary_model = builder.builder_model
         summarized_history = (
             summary_model.create(
                 messages=[

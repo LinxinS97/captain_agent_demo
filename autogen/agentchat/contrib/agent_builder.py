@@ -21,7 +21,6 @@ def _config_check(config: Dict):
 
     for agent_config in config["agent_configs"]:
         assert agent_config.get("name", None) is not None, 'Missing agent "name" in your agent_configs.'
-        assert agent_config.get("model", None) is not None, 'Missing agent "model" in your agent_configs.'
         assert (
             agent_config.get("system_message", None) is not None
         ), 'Missing agent "system_message" in your agent_configs.'
@@ -50,7 +49,7 @@ class AgentBuilder:
     GROUP_CHAT_DESCRIPTION = """ # Group chat instruction
 You are now working in a group chat with different expert and a group chat manager.
 
-Your are {name}
+**Your role is**: {name}
 Group chat members: {members}{user_proxy_desc}
 
 If there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
@@ -81,6 +80,7 @@ When the task is complete and the result has been carefully verified, after obta
 
 ## How to use code?
 - Suggest python code (in a python coding block) or shell script (in a sh coding block) for the Computer_terminal to execute.
+- If missing python packages, you can install the package by suggesting a `pip install` code in the ```sh ... ``` block.
 - When using code, you must indicate the script type in the coding block.
 - Do not the coding block which requires users to modify.
 - Do not suggest a coding block if it's not intended to be executed by the Computer_terminal.
@@ -251,8 +251,8 @@ Match roles in the role set to each expert in expert set.
         Returns:
             agent: a set-up agent.
         """
-
-        model_name_or_hf_repo = agent_config['model'] if isinstance(agent_config['model'], list) else [agent_config['model']]
+        model_name_or_hf_repo = agent_config.get('model', [])
+        model_name_or_hf_repo = model_name_or_hf_repo if isinstance(model_name_or_hf_repo, list) else [model_name_or_hf_repo]
         model_tags = agent_config.get('tags', [])
         agent_name = agent_config['name']
         system_message = agent_config['system_message']
@@ -297,32 +297,34 @@ Match roles in the role set to each expert in expert set.
 
             model_class = autogen.AssistantAgent
             if model_path:
-                module_path, model_class_name = model_path.replace('/').rsplit('.', 1)
+                module_path, model_class_name = model_path.replace('/', '.').rsplit('.', 1)
                 module = importlib.import_module(module_path)
                 model_class = getattr(module, model_class_name)
-                if not isinstance(model_class, autogen.ConversableAgent):
+                if not issubclass(model_class, autogen.ConversableAgent):
                     logger.error(f"{model_class} is not a ConversableAgent. Use AssistantAgent as default")
                     model_class = autogen.AssistantAgent
-                    
-            if system_message == "":
-                system_message = model_class().system_message
-                
+            
             additional_config = {
                 k: v for k, v in agent_config.items() if k not in ['model', 'name', 'system_message', 'description', 'model_path', 'tags']
-            }
+            } 
+            agent = model_class(
+                name=agent_name,
+                llm_config=current_config.copy(),
+                description=description,
+                **additional_config
+            )
+            if system_message == "":
+                system_message = agent.system_message
+            else:
+                system_message = f"{system_message}\n\n{self.CODING_AND_TASK_SKILL_INSTRUCTION}"
+            
             enhanced_sys_msg = self.GROUP_CHAT_DESCRIPTION.format(
                 name=agent_name, 
                 members=member_name, 
                 user_proxy_desc=user_proxy_desc, 
-                sys_msg=f"{system_message}\n\n{self.CODING_AND_TASK_SKILL_INSTRUCTION}"
+                sys_msg=system_message
             )
-            agent = model_class(
-                name=agent_name,
-                llm_config=current_config.copy(),
-                system_message=enhanced_sys_msg,
-                description=description,
-                **additional_config
-            )
+            agent.update_system_message(enhanced_sys_msg)
         self.agent_procs_assign[agent_name] = (agent, server_id)
         return agent
 
@@ -675,7 +677,7 @@ Match roles in the role set to each expert in expert set.
 
         print(colored("==> Creating agents...", "green"), flush=True)
         for config in agent_configs:
-            print(f"Creating agent {config['name']} with backbone {config['model']}...", flush=True)
+            print(f"Creating agent {config['name']}...", flush=True)
             self._create_agent(
                 agent_config=config.copy(),
                 member_name=[agent['name'] for agent in agent_configs],
