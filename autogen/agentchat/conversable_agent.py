@@ -2143,7 +2143,7 @@ class ConversableAgent(LLMAgent):
                     traceback.print_exc()
                     content = f"Error: {e}"
         else:
-            content = f"Error: Function {func_name} not found."
+            content = f"Error: You don't have a function called \"{func_name}\"."
 
         if verbose:
             print(
@@ -2202,7 +2202,7 @@ class ConversableAgent(LLMAgent):
                 except Exception as e:
                     content = f"Error: {e}"
         else:
-            content = f"Error: Function {func_name} not found."
+            content = f"Error: You don't have a function called \"{func_name}\"."
 
         return is_exec_success, {
             "name": func_name,
