@@ -43,10 +43,10 @@ default_llm_config = {
 }
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
 ## build agents
-config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4-1106"]})
+config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
 builder = AgentBuilder(config_file_or_env=config,
-                       builder_model='gpt-4-1106',
-                       agent_model='gpt-4-1106',
+                       builder_model_tags=["gpt-4", "0125", "1106", "claude3", "haiku"],
+                       agent_model_tags=["gpt-4", "0125", "1106", "claude3", "haiku"],
                        max_agents=max_agents)
 agent_list, _ = builder.load(config_json=AGENT_CONFIGS)
 
