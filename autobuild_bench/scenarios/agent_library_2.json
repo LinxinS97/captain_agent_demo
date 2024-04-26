@@ -1,7 +1,7 @@
 [
     {
         "name": "WebServing_Expert",
-        "tags": ["gpt-4", "0125", "1106"],
+        "tags": ["gpt-4", "0125", "1106", "claude3", "haiku"],
         "description": "A helpful assistant with access to a web browser. Ask them to perform web searches, open pages, navigate to Wikipedia, answer questions from pages, and or generate summaries.",
         "system_message": "",
         "model_path": "autogen/agentchat/contrib/web_surfer/WebSurferAgent",
