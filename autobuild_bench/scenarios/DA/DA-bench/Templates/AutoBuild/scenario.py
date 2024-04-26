@@ -35,7 +35,7 @@ with open("agent_list.txt", "rt") as fh:
 ####################
 # Task parameters
 max_agents = 10
-config = 'OAI_CONFIG_LIST'
+config = '__CONFIG_LIST_PATH__'
 default_llm_config = {
     "temperature": 1,
     "top_p": 0.95,

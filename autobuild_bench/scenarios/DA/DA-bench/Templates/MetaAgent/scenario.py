@@ -16,6 +16,8 @@ with open("format.txt", "rt") as fh:
 QUESTION = ""
 with open("question.txt", "rt") as fh:
     QUESTION = fh.read()
+    
+config = '__CONFIG_LIST_PATH__'
 
 PROMPT = """Let's solve a data analysis problem. 
 Given an csv file path, you are required to answer a question following a constraint. Do not plot any figure.
@@ -38,11 +40,11 @@ general_llm_config = {
     "temperature": 1,
     "top_p": 0.95,
     "max_tokens": 1500,
-    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_1", filter_dict={"model": ["gpt-4-1106""gpt-4-0125-preview", "gpt-4-turbo"]}),
+    "config_list": autogen.config_list_from_json("__CONFIG_LIST_PATH__", filter_dict={"model": ["gpt-4-1106""gpt-4-0125-preview", "gpt-4-turbo"]}),
 }
 nested_mode_config = {
     "autobuild_init_config": {
-        "config_file_or_env": "OAI_CONFIG_LIST_1",
+        "config_file_or_env": "__CONFIG_LIST_PATH__",
         "builder_model": ["gpt-4-1106""gpt-4-0125-preview", "gpt-4-turbo"],
         "agent_model": ["gpt-4-1106""gpt-4-0125-preview", "gpt-4-turbo"],
     },

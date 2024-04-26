@@ -35,7 +35,7 @@ def load_data():
     return selected_problems
 
 
-def create_jsonl(name, problems, template, agent_list = None):
+def create_jsonl(name, problems, template, agent_list = None, config_list="OAI_CONFIG_LIST"):
     """Creates a JSONL scenario file with a given name, dictionary of Chemistry problems, and template path."""
 
     # Create a task directory if it doesn't exist
@@ -61,7 +61,10 @@ def create_jsonl(name, problems, template, agent_list = None):
                         "expected_answer.txt": {"__ANSWER__": quest["answer_number"]},
                         "unit.txt": {"__UNIT__": quest['unit']},
                         "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
-                        "scenario.py": {"__AGENT_SAVE_PATH__": SAVE_DIR}
+                        "scenario.py": {
+                            "__AGENT_SAVE_PATH__": SAVE_DIR,
+                            "__CONFIG_LIST_PATH__": config_list
+                        }
                     },
                 }
 
@@ -72,7 +75,7 @@ def create_jsonl(name, problems, template, agent_list = None):
 
 
 ###############################################################################
-def main():
+def main(args):
     problems = load_data()
 
     building_task = """We need a group of experts to solve some scientific problems.
@@ -98,7 +101,7 @@ They need to solve the problem collaboratively and check each other's answer. Al
         agent_configs = json.load(open(f"{SAVE_DIR}/autobuild.json"))
     else:
         builder = AgentBuilder(
-            config_file_or_env='OAI_CONFIG_LIST',
+            config_file_or_env=args.config_list,
             builder_model='gpt-4-1106',
             agent_model='gpt-4-1106',
             max_agents=10
@@ -111,8 +114,12 @@ They need to solve the problem collaboratively and check each other's answer. Al
         builder.save(f"{SAVE_DIR}/autobuild.json")
 
     for t in templates.items():
-        create_jsonl(f"sci_phy_{t[0]}", problems, t[1], agent_list=agent_configs)
+        create_jsonl(f"sci_phy_{t[0]}", problems, t[1], agent_list=agent_configs, config_list=args.config_list)
 
 
-if __name__ == "__main__" and __package__ is None:
-    main()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config-list', type=str, default="OAI_CONFIG_LIST")
+    args = parser.parse_args()
+    main(args)
+

@@ -24,7 +24,7 @@ with open("agent_list.txt", "rt") as fh:
 ####################
 # Task parameters
 max_agents = 10
-config = 'OAI_CONFIG_LIST'
+config = '__CONFIG_LIST_PATH__'
 default_llm_config = {
     "temperature": 1,
     "top_p": 0.95,
@@ -34,10 +34,10 @@ default_llm_config = {
 ## build agents
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
 
-config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4-1106"]})
+config_list = autogen.config_list_from_json(config, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
 builder = AgentBuilder(config_file_or_env=config,
-                       builder_model='gpt-4-1106',
-                       agent_model='gpt-4-1106',
+                       builder_model_tags=["gpt-4", "0125", "1106", "claude3", "haiku"],
+                       agent_model_tags=["gpt-4", "0125", "1106", "claude3", "haiku"],
                        max_agents=max_agents)
 agent_list, _ = builder.load(config_json=AGENT_CONFIGS)
 

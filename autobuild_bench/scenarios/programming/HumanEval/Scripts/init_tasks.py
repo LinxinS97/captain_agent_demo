@@ -3,6 +3,7 @@
 # (default: ../scenarios/human_eval_two_agents_gpt4.jsonl and ./scenarios/human_eval_two_agents_gpt35.jsonl)
 #
 
+import argparse
 import requests
 import gzip
 import io
@@ -76,7 +77,7 @@ def download_human_eval():
     return results
 
 
-def create_jsonl(name, tasks, template, agent_list = None):
+def create_jsonl(name, tasks, template, agent_list = None, config_list="OAI_CONFIG_LIST"):
     """Creates a JSONL scenario file with a given name, list of HumanEval tasks, and template path."""
 
     # Create a task directory if it doesn't exist
@@ -96,7 +97,8 @@ def create_jsonl(name, tasks, template, agent_list = None):
                     "scenario.py": {
                         "__ENTRY_POINT__": task["entry_point"],
                         "__SELECTION_METHOD__": "auto",
-                        "__AGENT_SAVE_PATH__": SAVE_DIR
+                        "__AGENT_SAVE_PATH__": SAVE_DIR,
+                        "__CONFIG_LIST_PATH__": config_list,
                     },
                     "prompt.txt": {"__PROMPT__": task["prompt"]},
                     "coding/my_tests.py": {
@@ -111,7 +113,7 @@ def create_jsonl(name, tasks, template, agent_list = None):
 
 
 ###############################################################################
-def main():
+def main(args):
     human_eval = download_human_eval()
     reduced_human_eval = [t for t in human_eval if t["task_id"] in REDUCED_SET]
 
@@ -141,7 +143,7 @@ They need to solve the problem collaboratively and check each other's answer. Al
             templates[re.sub(r"\s", "", entry.name)] = entry.path
 
     # build agents
-    builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
+    builder = AgentBuilder(config_file_or_env=args.config_list,
                            builder_model='gpt-4-1106',  # you can modify the model
                            agent_model='gpt-4-1106',
                            max_agents=10)
@@ -157,5 +159,9 @@ They need to solve the problem collaboratively and check each other's answer. Al
         create_jsonl(f"r_human_eval_{t[0]}", reduced_human_eval, t[1], agent_list=agent_configs)
 
 
-if __name__ == "__main__" and __package__ is None:
-    main()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config-list', type=str, default="OAI_CONFIG_LIST")
+    args = parser.parse_args()
+    main(args)
+

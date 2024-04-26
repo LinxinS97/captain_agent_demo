@@ -22,15 +22,15 @@ general_llm_config = {
     "config_list": autogen.config_list_from_json(
         "__CONFIG_LIST_PATH__", 
         filter_dict={
-            "tags": ["gpt-4", "0125", "1106"]
+            "tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]
         }
     ),
 }
 nested_mode_config = {
     "autobuild_init_config": {
         "config_file_or_env": "__CONFIG_LIST_PATH__",
-        "builder_model_tags": ['gpt-4', '0125', '1106'],
-        "agent_model_tags": ['gpt-4', '0125', '1106'],
+        "builder_model_tags": ['gpt-4', '0125', '1106', "claude3", "haiku"],
+        "agent_model_tags": ['gpt-4', '0125', '1106', "claude3", "haiku"],
         "max_agents": 5,
     },
     "autobuild_build_config": {

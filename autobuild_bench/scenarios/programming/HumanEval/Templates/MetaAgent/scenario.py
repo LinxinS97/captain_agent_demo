@@ -24,14 +24,14 @@ with open("prompt.txt", "rt") as fh:
 # Task parameters
 general_llm_config = {
     "temperature": 0,
-    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_1", filter_dict={"model": ["gpt-4-1106""gpt-4-0125-preview", "gpt-4-turbo"]}),
+    "config_list": autogen.config_list_from_json("__CONFIG_LIST_PATH__", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}),
 }
 
 nested_mode_config = {
     "autobuild_init_config": {
-        "config_file_or_env": "OAI_CONFIG_LIST_1",
-        "builder_model": ["gpt-4-1106""gpt-4-0125-preview", "gpt-4-turbo"],
-        "agent_model": ["gpt-4-1106""gpt-4-0125-preview", "gpt-4-turbo"],
+        "config_file_or_env": "__CONFIG_LIST_PATH__",
+        "builder_model_tags": ["gpt-4", "0125", "1106", "claude3", "haiku"],
+        "agent_model_tags": ["gpt-4", "0125", "1106", "claude3", "haiku"],
     },
     "autobuild_build_config": {
         "default_llm_config": {
@@ -47,11 +47,11 @@ nested_mode_config = {
             "work_dir": work_dir,
         },
         "coding": True,
-        "library_path_or_json": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/agent_library.json",
+        "library_path_or_json": "/linxindisk/linxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/agent_library.json",
     },
     "autobuild_tool_config": {
-        "tool_corpus": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/tools/tool_description.tsv",
-        "tool_root": "/home/ubuntu/disklinxin/llm/autogen-autobuild-dev/tools",
+        "tool_corpus": "/linxindisk/linxin/llm/autogen-autobuild-dev/tools/tool_description.tsv",
+        "tool_root": "/linxindisk/linxin/llm/autogen-autobuild-dev/tools",
         "retriever": "all-mpnet-base-v2",
     },
     "group_chat_config": {"max_round": 15},

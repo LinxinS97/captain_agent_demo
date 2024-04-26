@@ -22,7 +22,7 @@ with open("prompt.txt", "rt") as fh:
 
 ##############################
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
-config_list = autogen.config_list_from_json("OAI_CONFIG_LIST")
+config_list = autogen.config_list_from_json("__CONFIG_LIST_PATH__")
 llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
 user_proxy = autogen.UserProxyAgent(
