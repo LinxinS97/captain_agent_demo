@@ -303,6 +303,9 @@ echo RUN.SH STARTING !#!#
 export AUTOGEN_TESTBED_SETTING="Native"
 echo "autogenbench version: {__version__}" > timestamp.txt
 
+python -m venv ./autogenbench_venv
+source ./autogenbench_venv/bin/activate
+
 # Run the global init script if it exists
 if [ -f global_init.sh ] ; then
     . ./global_init.sh

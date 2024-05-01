@@ -144,9 +144,9 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     # build agents
     builder = AgentBuilder(config_file_or_env=args.config_list,
-                           builder_model='gpt-4-1106',  # you can modify the model
-                           agent_model='gpt-4-1106',
-                           max_agents=10)
+                        builder_model_tags=['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet'],
+                        agent_model_tags=['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet'],
+                        max_agents=10)
     _, agent_configs = builder.build(building_task,
                                      default_llm_config,
                                      code_execution_config=code_execution_config,
@@ -161,7 +161,7 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config-list', type=str, default="OAI_CONFIG_LIST")
+    parser.add_argument("--config-list", type=str, default="OAI_CONFIG_LIST")
     args = parser.parse_args()
     main(args)
 

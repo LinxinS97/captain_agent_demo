@@ -32,7 +32,7 @@ CODE_BLOCK_PATTERN = r"```[ \t]*(\w+)?[ \t]*\r?\n(.*?)\r?\n[ \t]*```"
 WORKING_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "extensions")
 UNKNOWN = "Unknown (Do not put anything in ```...``` block without specifing a programming language.)"
 TIMEOUT_MSG = "Timeout"
-DEFAULT_TIMEOUT = 600
+DEFAULT_TIMEOUT = 10
 WIN32 = sys.platform == "win32"
 PATH_SEPARATOR = WIN32 and "\\" or "/"
 PYTHON_VARIANTS = ["python", "Python", "py"]

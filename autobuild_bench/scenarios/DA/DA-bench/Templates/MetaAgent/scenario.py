@@ -40,7 +40,7 @@ general_llm_config = {
     "temperature": 1,
     "top_p": 0.95,
     "max_tokens": 1500,
-    "config_list": autogen.config_list_from_json("__CONFIG_LIST_PATH__", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}),
+    "config_list": autogen.config_list_from_json("__CONFIG_LIST_PATH__", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]}),
 }
 nested_mode_config = {
     "autobuild_init_config": {
@@ -64,7 +64,12 @@ nested_mode_config = {
         "retriever": "all-mpnet-base-v2",
     },
     "group_chat_config": {"max_round": 15},
-    "group_chat_llm_config": general_llm_config.copy(),
+    "group_chat_llm_config": {
+        "temperature": 1,
+        "top_p": 0.95,
+        "max_tokens": 1500,
+        "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]}),
+    },
 }
 ## build agents
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
@@ -120,9 +125,11 @@ Please do the following:
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The reply doesn't contain an answer." """
 
+checker_config_list = autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
+checker_llm_config = testbed_utils.default_llm_config(checker_config_list, timeout=180)
 answer_checker = autogen.AssistantAgent(
     name="checker",
-    llm_config=general_llm_config.copy(),
+    llm_config=checker_llm_config,
     system_message=check_sys_msg
 )
 checker_proxy = autogen.UserProxyAgent(

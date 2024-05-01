@@ -200,7 +200,7 @@ Match roles in the role set to each expert in expert set.
         )
         if len(builder_config_list) == 0:
             raise RuntimeError(
-                f"Fail to initialize build manager: {self.builder_model}{builder_model_tags} does not exist in {self.config_file_or_env}. "
+                f"Fail to initialize build manager: {builder_model}{builder_model_tags} does not exist in {config_file_or_env}. "
                 f'If you want to change this model, please specify the "builder_model" in the constructor.'
             )
         self.builder_model = autogen.OpenAIWrapper(config_list=builder_config_list)

@@ -235,9 +235,9 @@ class GroupChat:
         return f"""You are in a role play game. The following roles are in the group chat:
 {self._participant_roles(agents)}.
 
-Select the next role from {[agent.name for agent in agents]} to play according to the conversation history. Only return the name of the role.
+Select the next role from {[agent.name for agent in agents]} to play according to the conversation history.
 You should response to the role's @mention if exist, help selecting the corresponding role.
-You cannot reply TERMINATE."""
+You **MUST** return only the name of the role."""
 
     def select_speaker_prompt(self, agents: Optional[List[Agent]] = None) -> str:
         """Return the floating system prompt selecting the next speaker. This is always the *last* message in the context."""

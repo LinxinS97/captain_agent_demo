@@ -36,18 +36,20 @@ default_llm_config = {
 
 ## build agents
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
-
 config_list = autogen.config_list_from_json(config, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
 builder = AgentBuilder(config_file_or_env=config,
                        builder_model_tags=["gpt-4", "0125", "1106", "claude3", "haiku"],
                        agent_model_tags=["gpt-4", "0125", "1106", "claude3", "haiku"],
                        max_agents=max_agents)
-agent_list, _ = builder.load(config_json=AGENT_CONFIGS)
+agent_list, agent_configs = builder.load(config_json=AGENT_CONFIGS)
 
 ## Run task
-group_chat = autogen.GroupChat(agents=agent_list, messages=[], max_round=20)
+group_chat = autogen.GroupChat(agents=agent_list, messages=[], max_round=20, allow_repeat_speaker=agent_list[:-1] if agent_configs['coding'] is True else agent_list)
 manager = autogen.GroupChatManager(
-    groupchat=group_chat, code_execution_config={'use_docker': False}, llm_config={"config_list": config_list, **default_llm_config}
+    groupchat=group_chat, code_execution_config={'use_docker': False}, llm_config={
+        "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}), 
+        **default_llm_config
+    }
 )
 
 agent_list[0].initiate_chat(manager, message=f"""

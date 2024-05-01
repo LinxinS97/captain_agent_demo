@@ -20,18 +20,17 @@ with open("expected_answer.txt", "rt") as fh:
 general_llm_config = {
     "temperature": 0,
     "config_list": autogen.config_list_from_json(
-        "__CONFIG_LIST_PATH__", 
+        "OAI_CONFIG_LIST_0125", 
         filter_dict={
-            "tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]
+            "tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]
         }
     ),
 }
 nested_mode_config = {
     "autobuild_init_config": {
         "config_file_or_env": "__CONFIG_LIST_PATH__",
-        "builder_model_tags": ['gpt-4', '0125', '1106', "claude3", "haiku"],
-        "agent_model_tags": ['gpt-4', '0125', '1106', "claude3", "haiku"],
-        "max_agents": 5,
+        "builder_model_tags": ["gpt-4", "0125", "1106", "claude3", "haiku"],
+        "agent_model_tags": ["gpt-4", "0125", "1106", "claude3", "haiku"],
     },
     "autobuild_build_config": {
         "default_llm_config": {
@@ -41,15 +40,20 @@ nested_mode_config = {
             "cache_seed": None,
         },
         "coding": True,
-        "library_path_or_json": "__LIBRARY_PATH__",
+        "library_path_or_json": "/linxindisk/linxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/agent_library.json",
     },
     "autobuild_tool_config": {
-        "tool_corpus": "__TOOL_CORPUS__",
-        "tool_root": "__TOOL_ROOT__",
+        "tool_corpus": "/linxindisk/linxin/llm/autogen-autobuild-dev/tools/tool_description.tsv",
+        "tool_root": "/linxindisk/linxin/llm/autogen-autobuild-dev/tools",
         "retriever": "all-mpnet-base-v2",
     },
     "group_chat_config": {"max_round": 15},
-    "group_chat_llm_config": general_llm_config.copy(),
+    "group_chat_llm_config": {
+        "temperature": 1,
+        "top_p": 0.95,
+        "max_tokens": 1500,
+        "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]}),
+    },
 }
 
 ## build agents
@@ -110,9 +114,12 @@ Please do the following:
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The reply doesn't contain an answer." """
 
+checker_config_list = autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106"]})
+checker_llm_config = testbed_utils.default_llm_config(checker_config_list, timeout=180)
+
 answer_checker = autogen.AssistantAgent(
     name="checker",
-    llm_config=general_llm_config.copy(),
+    llm_config=checker_llm_config,
     system_message=check_sys_msg
 )
 checker_proxy = autogen.UserProxyAgent(

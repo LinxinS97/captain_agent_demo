@@ -24,9 +24,8 @@ with open("prompt.txt", "rt") as fh:
 # Task parameters
 general_llm_config = {
     "temperature": 0,
-    "config_list": autogen.config_list_from_json("__CONFIG_LIST_PATH__", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}),
+    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}),
 }
-
 nested_mode_config = {
     "autobuild_init_config": {
         "config_file_or_env": "__CONFIG_LIST_PATH__",
@@ -40,12 +39,6 @@ nested_mode_config = {
             "max_tokens": 1500,
             "cache_seed": None,
         },
-        "code_execution_config": {
-            "last_n_messages": 1,
-            "use_docker": False,
-            "timeout": 10,
-            "work_dir": work_dir,
-        },
         "coding": True,
         "library_path_or_json": "/linxindisk/linxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/agent_library.json",
     },
@@ -55,7 +48,12 @@ nested_mode_config = {
         "retriever": "all-mpnet-base-v2",
     },
     "group_chat_config": {"max_round": 15},
-    "group_chat_llm_config": general_llm_config.copy(),
+    "group_chat_llm_config": {
+        "temperature": 1,
+        "top_p": 0.95,
+        "max_tokens": 1500,
+        "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]}),
+    },
 }
 
 ## build agents

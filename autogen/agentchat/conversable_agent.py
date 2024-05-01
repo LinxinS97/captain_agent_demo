@@ -1292,12 +1292,16 @@ class ConversableAgent(LLMAgent):
                 all_messages.append(message)
 
         # TODO: #1143 handle token limit exceeded error
-        response = llm_client.create(
-            context=messages[-1].pop("context", None),
-            messages=all_messages,
-            cache=cache,
-        )
-        extracted_response = llm_client.extract_text_or_completion_object(response)[0]
+        try:
+            response = llm_client.create(
+                context=messages[-1].pop("context", None),
+                messages=all_messages,
+                cache=cache,
+            )
+            extracted_response = llm_client.extract_text_or_completion_object(response)[0]
+        except Exception:
+            traceback.print_exc()
+            extracted_response = None
 
         if extracted_response is None:
             warnings.warn("Extracted_response from {response} is None.", UserWarning)

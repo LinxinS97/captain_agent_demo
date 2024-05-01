@@ -70,8 +70,8 @@ def download_math():
     # Extract selected problems
     tar = tarfile.open(tar_file)
     for member in tar.getmembers():
-        # if member.name in SELECTED_PROBLEMS:
-        if ".json" in member.name and "test" in member.name:
+        if member.name in SELECTED_PROBLEMS:
+        # if ".json" in member.name and "test" in member.name:
             # print(f"Extracting: {member.name}")
             content = tar.extractfile(member).read()
             selected_problems[member.name] = json.loads(content)
@@ -92,7 +92,7 @@ def create_jsonl(name, problems, template, agent_list = None, list_path = "OAI_C
             data = item[1]
 
             task_id = item[0].replace("MATH/", "").replace(".json", "").replace("/", "_")
-            print(f"Converting: [{item[0]}] {task_id}")
+            # print(f"Converting: [{item[0]}] {task_id}")
 
             record = {
                 "id": task_id,
@@ -137,9 +137,9 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     ## build agents
     builder = AgentBuilder(config_file_or_env=args.config_list,
-                           builder_model_tags=['gpt-4', '1106', '0125'],
-                           agent_model_tags=['gpt-4', '1106', '0125'],
-                           max_agents=10)
+                        builder_model_tags=['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet'],
+                        agent_model_tags=['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet'],
+                        max_agents=10)
     _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
     builder.save(f"{SAVE_DIR}/autobuild.json")
 
@@ -148,6 +148,6 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config-list', type=str, default="OAI_CONFIG_LIST")
+    parser.add_argument('--config-list', type=str, default="OAI_CONFIG_LIST")
     args = parser.parse_args()
     main(args)
