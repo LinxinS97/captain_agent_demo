@@ -14,13 +14,14 @@ ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
 
-
+config1 = '__CONFIG_LIST_PATH__'
+config2 = '__CONFIG_LIST_PATH2__'
 ####################
 ## Task parameters
 general_llm_config = {
     "temperature": 0,
     "config_list": autogen.config_list_from_json(
-        "OAI_CONFIG_LIST_0125", 
+        config2, 
         filter_dict={
             "tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]
         }
@@ -28,9 +29,9 @@ general_llm_config = {
 }
 nested_mode_config = {
     "autobuild_init_config": {
-        "config_file_or_env": "__CONFIG_LIST_PATH__",
-        "builder_model_tags": ["gpt-4", "0125", "1106", "claude3", "haiku"],
-        "agent_model_tags": ["gpt-4", "0125", "1106", "claude3", "haiku"],
+        "config_file_or_env": config1,
+        "builder_model_tags": ['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet', 'gemini-1.5', 'llama3', '8b', '70b', 'mixtral', '8x22b', '8x7b'],
+        "agent_model_tags": ['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet', 'gemini-1.5', 'llama3', '8b', '70b', 'mixtral', '8x22b', '8x7b'],
     },
     "autobuild_build_config": {
         "default_llm_config": {
@@ -40,20 +41,15 @@ nested_mode_config = {
             "cache_seed": None,
         },
         "coding": True,
-        "library_path_or_json": "/linxindisk/linxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/agent_library.json",
+        "library_path_or_json": "__LIBRARY_PATH__",
     },
     "autobuild_tool_config": {
-        "tool_corpus": "/linxindisk/linxin/llm/autogen-autobuild-dev/tools/tool_description.tsv",
-        "tool_root": "/linxindisk/linxin/llm/autogen-autobuild-dev/tools",
+        "tool_corpus": "__TOOL_CORPUS__",
+        "tool_root": "__TOOL_ROOT__",
         "retriever": "all-mpnet-base-v2",
     },
     "group_chat_config": {"max_round": 15},
-    "group_chat_llm_config": {
-        "temperature": 1,
-        "top_p": 0.95,
-        "max_tokens": 1500,
-        "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]}),
-    },
+    "group_chat_llm_config": general_llm_config.copy(),
 }
 
 ## build agents
@@ -114,12 +110,9 @@ Please do the following:
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The reply doesn't contain an answer." """
 
-checker_config_list = autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106"]})
-checker_llm_config = testbed_utils.default_llm_config(checker_config_list, timeout=180)
-
 answer_checker = autogen.AssistantAgent(
     name="checker",
-    llm_config=checker_llm_config,
+    llm_config=general_llm_config.copy(),
     system_message=check_sys_msg
 )
 checker_proxy = autogen.UserProxyAgent(

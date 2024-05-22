@@ -35,10 +35,10 @@ def find_files(directory, file_name):
 
 
 if __name__ == "__main__":
-    directory = './'
+    directory = '/linxindisk/linxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Physics/Results/sci_phy_MetaAgent_35'
     file_name = 'logs.db'
     files = find_files(directory, file_name)
-
+    cost_sum = 0
     for file in files:
         cost = 1
         for cost_idx in COST_MAP.keys():
@@ -63,4 +63,6 @@ if __name__ == "__main__":
         # Sum total cost for all sessions
         total_cost = log_data_df["cost"].sum()
 
-        print(f"Total cost: {str(round(total_cost * cost, 4))}")
+        print(f"Total cost: {str(round(total_cost, 4))}")
+        cost_sum += round(total_cost, 4)
+    print("total cost: ", cost_sum)

@@ -237,7 +237,8 @@ class GroupChat:
 
 Select the next role from {[agent.name for agent in agents]} to play according to the conversation history.
 You should response to the role's @mention if exist, help selecting the corresponding role.
-You **MUST** return only the name of the role."""
+You **MUST** return only the name of the role.
+Do NOT select Computer_terminal if there are not codes in the last message."""
 
     def select_speaker_prompt(self, agents: Optional[List[Agent]] = None) -> str:
         """Return the floating system prompt selecting the next speaker. This is always the *last* message in the context."""

@@ -47,12 +47,12 @@ class AgentBuilder:
     DEFAULT_PROXY_AUTO_REPLY = 'There is no code from the last 1 message for me to execute. Group chat manager should let other participants to continue the conversation. If the group chat manager want to end the conversation, you should let other participant reply me only with "TERMINATE"'
 
     GROUP_CHAT_DESCRIPTION = """ # Group chat instruction
-You are now working in a group chat with different expert and a group chat manager.
+You are now working in a group chat with different expert and a group chat manager. 
+You should refer to the previous message from other participant members or yourself, follow their topic and reply to them.
 
 **Your role is**: {name}
 Group chat members: {members}{user_proxy_desc}
 
-If there is someone you want to talk to, you can @mention him/her with "I would like to hear the opinion from ...".
 When the task is complete and the result has been carefully verified, after obtaining agreement from the other members, you can end the conversation by replying only with "TERMINATE".
 
 # Your profile
@@ -550,7 +550,7 @@ Match roles in the role set to each expert in expert set.
             raise e
 
         print(colored("==> Looking for suitable agents in the library...", "green"), flush=True)
-        skills = building_task.split("\n")
+        skills = building_task.replace(":", " ").split("\n")
         # skills = [line.split("-", 1)[1].strip() if line.startswith("-") else line for line in lines]
         if len(skills) == 0:
             skills = [building_task]
@@ -603,7 +603,7 @@ Match roles in the role set to each expert in expert set.
                 break
             except Exception as e:
                 print(e, flush=True)
-                time.sleep(30)
+                time.sleep(5)
                 continue
         
         recalled_agent_config_list = []

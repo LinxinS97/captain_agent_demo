@@ -19,9 +19,11 @@ PROMPT = ""
 with open("prompt.txt", "rt") as fh:
     PROMPT = fh.read()
 
-###############################
+config1 = '__CONFIG_LIST_PATH__'
+config2 = '__CONFIG_LIST_PATH2__'
+##############################
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
-config_list = autogen.config_list_from_json("__CONFIG_LIST_PATH__")
+config_list = autogen.config_list_from_json(config1)
 
 assistant = autogen.AssistantAgent(
     "assistant",
@@ -51,7 +53,7 @@ from my_tests import run_tests
 
 {PROMPT}
 
-# Run the unit tests
+# Run the unit tests. All unit tests are running online. DO NOT MODIFY THE FOLLOWING LINE.
 run_tests(__ENTRY_POINT__)
 ```
 

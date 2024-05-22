@@ -15,12 +15,12 @@ Use them by following the function's instruction if you need.
 {functions}
 """
 
-    def __init__(self, corpus_path, retriever):
+    def __init__(self, corpus_path, retriever, device="cpu"):
 
         self.df = pd.read_csv(corpus_path, sep='\t')
         document_list = self.df['document_content'].tolist()
 
-        self.model = SentenceTransformer(retriever)
+        self.model = SentenceTransformer(retriever, device=device)
         self.embeddings = self.model.encode(document_list)
     
     def retrieve(self, query, top_k=3):

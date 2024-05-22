@@ -24,7 +24,8 @@ with open("agent_list.txt", "rt") as fh:
 ####################
 # Task parameters
 max_agents = 10
-config = '__CONFIG_LIST_PATH__'
+config1 = '__CONFIG_LIST_PATH__'
+config2 = '__CONFIG_LIST_PATH2__'
 default_llm_config = {
     "temperature": 1,
     "top_p": 0.95,
@@ -33,8 +34,7 @@ default_llm_config = {
 
 ## build agents
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
-config_list = autogen.config_list_from_json(config, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
-builder = AgentBuilder(config_file_or_env=config,
+builder = AgentBuilder(config_file_or_env=config1,
                        builder_model_tags=["gpt-4", "0125", "1106", "claude3", "haiku"],
                        agent_model_tags=["gpt-4", "0125", "1106", "claude3", "haiku"],
                        max_agents=max_agents)
@@ -44,7 +44,7 @@ agent_list, agent_configs = builder.load(config_json=AGENT_CONFIGS)
 group_chat = autogen.GroupChat(agents=agent_list, messages=[], max_round=20, allow_repeat_speaker=agent_list[:-1] if agent_configs['coding'] is True else agent_list)
 manager = autogen.GroupChatManager(
     groupchat=group_chat, code_execution_config={'use_docker': False}, llm_config={
-        "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}), 
+        "config_list": autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}), 
         **default_llm_config
     }
 )
@@ -59,8 +59,8 @@ agent_list[0].initiate_chat(manager, message=question.format(problem=PROBLEM, un
 
 ## collect response
 messages = []
-key = list(agent_list[0].chat_messages.keys())[0]
-chat_messages = agent_list[0].chat_messages[key]
+key = list(agent_list[-1].chat_messages.keys())[0]
+chat_messages = agent_list[-1].chat_messages[key]
 for item in chat_messages:
     messages.append(item)
 messages.reverse()
@@ -91,7 +91,7 @@ Please do the following:
     - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The reply doesn't contain an answer." """
-checker_config_list = autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
+checker_config_list = autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
 checker_llm_config = testbed_utils.default_llm_config(checker_config_list, timeout=180)
 answer_checker = autogen.AssistantAgent(
     name="checker",

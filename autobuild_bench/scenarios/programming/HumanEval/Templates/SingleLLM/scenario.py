@@ -19,9 +19,11 @@ PROMPT = ""
 with open("prompt.txt", "rt") as fh:
     PROMPT = fh.read()
 
-###############################
+config1 = '__CONFIG_LIST_PATH__'
+config2 = '__CONFIG_LIST_PATH2__'
+##############################
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
-config_list = autogen.config_list_from_json("__CONFIG_LIST_PATH__")
+config_list = autogen.config_list_from_json(config1)
 
 assistant = autogen.AssistantAgent(
     "assistant",

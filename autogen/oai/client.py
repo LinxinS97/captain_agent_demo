@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import logging
 import sys
+import time
 import uuid
 from typing import Any, Callable, Dict, List, Optional, Protocol, Tuple, Union
 
@@ -275,7 +276,18 @@ class OpenAIClient:
             # If streaming is not enabled, send a regular chat completion request
             params = params.copy()
             params["stream"] = False
-            response = completions.create(**params)
+            while True:
+                try:
+                    response = completions.create(**params)
+                    break
+                except openai.BadRequestError:
+                    print("BadRequest, retrying...", flush=True)
+                    time.sleep(1)
+                    continue
+                except openai.APIStatusError:
+                    print("APIStatusError, retrying...", flush=True)
+                    time.sleep(1)
+                    continue
 
         return response
 

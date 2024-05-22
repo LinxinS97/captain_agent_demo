@@ -17,10 +17,13 @@ ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
 
+config1 = '__CONFIG_LIST_PATH__'
+config2 = '__CONFIG_LIST_PATH2__'
+
 ####################
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
     
-config_list = autogen.config_list_from_json("__CONFIG_LIST_PATH__")
+config_list = autogen.config_list_from_json(config1)
 llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
 user_proxy = autogen.UserProxyAgent(
@@ -66,6 +69,8 @@ Please do the following:
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The reply doesn't contain an answer." """
 
+config_list = autogen.config_list_from_json(config2)
+llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 answer_checker = autogen.AssistantAgent(name="checker", llm_config=llm_config, system_message=check_sys_msg)
 checker_proxy = autogen.UserProxyAgent(
     "checker_proxy",

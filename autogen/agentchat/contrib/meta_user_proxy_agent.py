@@ -29,8 +29,8 @@ class MetaUserProxyAgent(ConversableAgent):
     """(In preview) A proxy agent for the meta agent, that can execute code and provide feedback to the other agents."""
 
     CONVERSATION_REVIEW_PROMPT = """# Your task
-Briefly summarize the conversation history derive from a experts' group chat by following the answer format.
-If you found non-trivial contradictions or issues in the conversation, point it out with a deatiled reason and mark the "Need double-check" as "Yes".
+Briefly summarize the conversation history derived from an experts' group chat by following the answer format.
+If you found non-trivial contradictions or issues in the conversation, point it out with a detailed reason and mark the "Need double-check" as "Yes."
 
 # Conversation history:
 {chat_history}
@@ -48,7 +48,7 @@ If you found non-trivial contradictions or issues in the conversation, point it 
 ## Contradictions or issues in the conversation
 ...
 
-### Need double-check?
+### Need to double-check?
 [Yes or No]
 
 ## Additional information (file path, code blocks, url, etc.)

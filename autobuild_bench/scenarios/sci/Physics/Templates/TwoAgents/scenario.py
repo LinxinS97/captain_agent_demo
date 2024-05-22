@@ -17,10 +17,11 @@ ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
 
-
+config1 = '__CONFIG_LIST_PATH__'
+config2 = '__CONFIG_LIST_PATH2__'
 ####################
 logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
-config_list = autogen.config_list_from_json("__CONFIG_LIST_PATH__")
+config_list = autogen.config_list_from_json(config1)
 llm_config = testbed_utils.default_llm_config(config_list, timeout=180)
 
 question = """Please solve the following physics problem: 
@@ -81,7 +82,7 @@ Please do the following:
     - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The reply doesn't contain an answer." """
-checker_config_list = autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
+checker_config_list = autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
 checker_llm_config = testbed_utils.default_llm_config(checker_config_list, timeout=180)
 answer_checker = autogen.AssistantAgent(name="checker", llm_config=checker_llm_config, system_message=check_sys_msg)
 checker_proxy = autogen.UserProxyAgent(

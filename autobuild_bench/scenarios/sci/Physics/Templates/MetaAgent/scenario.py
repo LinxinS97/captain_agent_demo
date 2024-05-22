@@ -16,19 +16,20 @@ with open("unit.txt", "rt") as fh:
 ANSWER = ""
 with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
-
+config1 = '__CONFIG_LIST_PATH__'
+config2 = '__CONFIG_LIST_PATH2__'
 
 ####################
 # Task parameters
 general_llm_config = {
     "temperature": 0,
-    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}),
+    "config_list": autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}),
 }
 nested_mode_config = {
     "autobuild_init_config": {
-        "config_file_or_env": "__CONFIG_LIST_PATH__",
-        "builder_model_tags": ["gpt-4", "0125", "1106", "claude3", "haiku"],
-        "agent_model_tags": ["gpt-4", "0125", "1106", "claude3", "haiku"],
+        "config_file_or_env": config1,
+        "builder_model_tags": ['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet', 'gemini-1.5', 'llama3', '8b', '70b', 'mixtral', '8x22b', '8x7b'],
+        "agent_model_tags": ['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet', 'gemini-1.5', 'llama3', '8b', '70b', 'mixtral', '8x22b', '8x7b'],
     },
     "autobuild_build_config": {
         "default_llm_config": {
@@ -50,7 +51,7 @@ nested_mode_config = {
         "temperature": 1,
         "top_p": 0.95,
         "max_tokens": 1500,
-        "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]}),
+        "config_list": autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]}),
     },
 }
 ## build agents
@@ -111,7 +112,7 @@ Please do the following:
     - "The answer is approximated but should be correct. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The answer is incorrect. Correct Answer: <ground truth answer> | Answer extracted: <answer extracted>."
     - "The reply doesn't contain an answer." """
-checker_config_list = autogen.config_list_from_json("OAI_CONFIG_LIST_0125", filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
+checker_config_list = autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
 checker_llm_config = testbed_utils.default_llm_config(checker_config_list, timeout=180)
 answer_checker = autogen.AssistantAgent(
     name="checker",

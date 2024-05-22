@@ -77,7 +77,7 @@ def download_human_eval():
     return results
 
 
-def create_jsonl(name, tasks, template, agent_list = None, config_list="OAI_CONFIG_LIST"):
+def create_jsonl(name, tasks, template, agent_list = None, config_list="OAI_CONFIG_LIST", config_list2="OAI_CONFIG_LIST"):
     """Creates a JSONL scenario file with a given name, list of HumanEval tasks, and template path."""
 
     # Create a task directory if it doesn't exist
@@ -86,7 +86,7 @@ def create_jsonl(name, tasks, template, agent_list = None, config_list="OAI_CONF
         os.mkdir(task_dir)
 
     # Create the jsonl file
-    with open(os.path.join(task_dir, name + ".jsonl"), "wt") as fh:
+    with open(os.path.join(TASKS_DIR, f"{name}{config_list.replace('OAI_CONFIG_LIST', '')}.jsonl"), "wt") as fh:
         for task in tasks:
             print(f"Converting: [{name}] {task['task_id']}")
 
@@ -99,6 +99,7 @@ def create_jsonl(name, tasks, template, agent_list = None, config_list="OAI_CONF
                         "__SELECTION_METHOD__": "auto",
                         "__AGENT_SAVE_PATH__": SAVE_DIR,
                         "__CONFIG_LIST_PATH__": config_list,
+                        "__CONFIG_LIST_PATH2__": config_list2
                     },
                     "prompt.txt": {"__PROMPT__": task["prompt"]},
                     "coding/my_tests.py": {
@@ -144,8 +145,8 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     # build agents
     builder = AgentBuilder(config_file_or_env=args.config_list,
-                        builder_model_tags=['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet'],
-                        agent_model_tags=['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet'],
+                        builder_model_tags=['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet', 'gemini-1.5', 'llama3', '8b', '70b', 'mixtral', '8x22b', '8x7b'],
+                        agent_model_tags=['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet', 'gemini-1.5', 'llama3', '8b', '70b', 'mixtral', '8x22b', '8x7b'],
                         max_agents=10)
     _, agent_configs = builder.build(building_task,
                                      default_llm_config,
@@ -155,13 +156,14 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     # Create the various combinations of [models] x [templates]
     for t in templates.items():
-        create_jsonl(f"human_eval_{t[0]}", human_eval, t[1], agent_list=agent_configs)
-        create_jsonl(f"r_human_eval_{t[0]}", reduced_human_eval, t[1], agent_list=agent_configs)
+        create_jsonl(f"human_eval_{t[0]}", human_eval, t[1], agent_list=agent_configs, config_list=args.config_list, config_list2=args.config_list2)
+        create_jsonl(f"r_human_eval_{t[0]}", reduced_human_eval, t[1], agent_list=agent_configs, config_list=args.config_list, config_list2=args.config_list2)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config-list", type=str, default="OAI_CONFIG_LIST")
+    parser.add_argument("--config-list2", type=str, default="OAI_CONFIG_LIST")
     args = parser.parse_args()
     main(args)
 

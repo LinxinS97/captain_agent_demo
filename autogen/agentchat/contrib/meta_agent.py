@@ -77,9 +77,9 @@ This task helps a build manager to build a group of experts for your task.
 You should suggest less then three roles (including a checker for verification) with the following format.
 
 ### Format
-- [description for role 1]
-- [description for role 2]
-- [description for checker]
+- [Detailed description for role 1]
+- [Detailed description for role 2]
+- [Detailed description for checker]
 
 ## execution_task
 This is the task that needs the experts to solve by conversation. 
