@@ -10,9 +10,9 @@ We also provided some brief instructions for `autogenbench` below.
 ## Installation
 The codebase is built upon autogenbench and autogen. So instead of installing via pip, you should install pyautogen and autogenbench in editable way:
 ```bash
-cd /path/to/CaptainAgent
+cd /path/to/autogen
 pip install -e .
-cd /path/to/CaptainAgent/samples/autogenbench
+cd /path/to/autogen/samples/autogenbench
 pip install -e .
 ```
 
