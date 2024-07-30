@@ -1,7 +1,7 @@
 # Captain Agent
 These are the supplementary files for the "Adaptive In-conversation Team Building for Language Model Agents." They contain code for running the experiments in the paper.
 
-The codebase is developed upon the AutoGen.
+The codebase is developed upon the AutoGen, where our implementations are located at `autogen/agentchat/contrib/meta_agent.py` and `autogen/agentchat/contrib/meta_user_proxy_agent.py`
 
 ## Instruction
 We use `autogenbench` to test all scenarios in our benchmark. For the detailed instruction on using `autogenbench`, please refer to [autogenbench](https://microsoft.github.io/autogen/blog/2024/01/25/AutoGenBench/).
