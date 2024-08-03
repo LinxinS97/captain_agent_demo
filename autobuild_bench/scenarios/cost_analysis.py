@@ -4,13 +4,38 @@ from pathlib import Path
 import pandas as pd
 
 
-COST_MAP = {
-    "MATH": 5000,
-    "DA-bench": 257,
-    "HumanEval": 164,
-    "GAIA": 53 + 86 + 26,
-    "sci/Chemistry": 20,
-    "sci/Physics": 20
+OAI_PRICE1K = {
+    "text-ada-001": 0.0004,
+    "text-babbage-001": 0.0005,
+    "text-curie-001": 0.002,
+    "code-cushman-001": 0.024,
+    "code-davinci-002": 0.1,
+    "text-davinci-002": 0.02,
+    "text-davinci-003": 0.02,
+    "gpt-3.5-turbo-instruct": (0.0015, 0.002),
+    "gpt-3.5-turbo-0301": (0.0015, 0.002),  # deprecate in Sep
+    "gpt-3.5-turbo-0613": (0.0015, 0.002),
+    "gpt-3.5-turbo-16k": (0.003, 0.004),
+    "gpt-3.5-turbo-16k-0613": (0.003, 0.004),
+    "gpt-35-turbo": (0.0015, 0.002),
+    "gpt-35-turbo-16k": (0.003, 0.004),
+    "gpt-35-turbo-instruct": (0.0015, 0.002),
+    "gpt-4": (0.03, 0.06),
+    "gpt-4-32k": (0.06, 0.12),
+    "gpt-4-0314": (0.03, 0.06),  # deprecate in Sep
+    "gpt-4-32k-0314": (0.06, 0.12),  # deprecate in Sep
+    "gpt-4-0613": (0.03, 0.06),
+    "gpt-4-32k-0613": (0.06, 0.12),
+    # 11-06
+    "gpt-3.5-turbo": (0.0015, 0.002),  # default is still 0613
+    "gpt-3.5-turbo-1106": (0.001, 0.002),
+    "gpt-35-turbo-1106": (0.001, 0.002),
+    "gpt-4-1106-preview": (0.01, 0.03),
+    "gpt-4-0125-preview": (0.01, 0.03),
+    "gpt-4-turbo-preview": (0.01, 0.03),
+    "gpt-4-1106-vision-preview": (0.01, 0.03),  # TODO: support vision pricing of images
+    "gpt-4o-mini": (0.000015, 0.00003),
+    "meta-llama/Meta-Llama-3-70B-Instruct": (0.00052, 0.00075),
 }
 
 
@@ -34,17 +59,24 @@ def find_files(directory, file_name):
     return list(path.rglob(file_name))
 
 
+def get_cost(row):
+    if row["response"] is None:
+        return 0
+    res_dict = str_to_dict(row["response"])
+    tmp_price1K = OAI_PRICE1K[res_dict["model"]] if res_dict["model"] in OAI_PRICE1K else 0
+    n_input_tokens = res_dict['usage']['prompt_tokens'] if res_dict['usage'] is not None else 0  # type: ignore [union-attr]
+    n_output_tokens = res_dict['usage']['completion_tokens'] if res_dict['usage'] is not None else 0  # type: ignore [union-attr]
+    if isinstance(tmp_price1K, tuple):
+        return (tmp_price1K[0] * n_input_tokens + tmp_price1K[1] * n_output_tokens) / 1000  # type: ignore [no-any-return]
+    return  tmp_price1K * (n_input_tokens + n_output_tokens) / 1000  # type: ignore [operator]
+
+
 if __name__ == "__main__":
-    directory = '/linxindisk/linxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Physics/Results/sci_phy_MetaAgent_35'
+    directory = '/linxindisk/linxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Physics/Results/sci_phy_MetaAgent_llama3_70'
     file_name = 'logs.db'
     files = find_files(directory, file_name)
     cost_sum = 0
     for file in files:
-        cost = 1
-        for cost_idx in COST_MAP.keys():
-            if cost_idx in str(file):
-                cost = COST_MAP[cost_idx]
-                break
         print(file)
         log_data = get_log(file)
         log_data_df = pd.DataFrame(log_data)
@@ -52,17 +84,12 @@ if __name__ == "__main__":
         log_data_df["total_tokens"] = log_data_df.apply(
             lambda row: str_to_dict(row["response"])["usage"]["total_tokens"], axis=1
         )
+        log_data_df["total_cost"] = log_data_df.apply(get_cost, axis=1)
         log_data_df["request"] = log_data_df.apply(lambda row: str_to_dict(row["request"])["messages"][0]["content"], axis=1)
         log_data_df["response"] = log_data_df.apply(
             lambda row: str_to_dict(row["response"])["choices"][0]["message"]["content"], axis=1
         )
+        
 
-        # Sum totoal tokens for all sessions
-        total_tokens = log_data_df["total_tokens"].sum()
-
-        # Sum total cost for all sessions
-        total_cost = log_data_df["cost"].sum()
-
-        print(f"Total cost: {str(round(total_cost, 4))}")
-        cost_sum += round(total_cost, 4)
+        cost_sum += round(log_data_df["total_cost"].sum(), 4)
     print("total cost: ", cost_sum)
