@@ -589,7 +589,7 @@ Match roles in the role set to each expert in expert set.
                         "role": "user", 
                         "content": self.AGENT_SELECTION_PROMPT.format(
                             skills=building_task, 
-                            expert_pool=expert_pool, 
+                            expert_pool="\n".join(expert_pool), 
                             max_agents=self.max_agents
                         )
                     }]

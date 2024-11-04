@@ -18,8 +18,8 @@ SAVE_DIR = os.path.join(SCENARIO_DIR, "Saved_agents")
 random.seed(41)
 
 def load_data():
-    label_path = os.path.join(DATA_DIR, "da-dev-labels.jsonl")
-    question_path = os.path.join(DATA_DIR, "da-dev-questions.jsonl")
+    label_path = os.path.join(DATA_DIR, "reduced-da-dev-labels.jsonl")
+    question_path = os.path.join(DATA_DIR, "reduced-da-dev-questions.jsonl")
 
     # Load label data
     label_data = []
@@ -91,6 +91,7 @@ They need to solve the problem collaboratively and check each other's answer. Al
         "temperature": 1,
         "top_p": 0.95,
         "max_tokens": 1024,
+        "stream": False,
     }
     # if os.path.exists(f"{SAVE_DIR}/autobuild.json"):
     #     agent_configs = json.load(open(f"{SAVE_DIR}/autobuild.json"))
@@ -117,8 +118,8 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config-list", type=str, default="OAI_CONFIG_LIST")
-    parser.add_argument("--config-list2", type=str, default="OAI_CONFIG_LIST")
+    parser.add_argument("--config-list", type=str, default="OAI_CONFIG_LIST_llama31_8")
+    parser.add_argument("--config-list2", type=str, default="OAI_CONFIG_LIST_llama31_8")
     args = parser.parse_args()
     main(args)
 

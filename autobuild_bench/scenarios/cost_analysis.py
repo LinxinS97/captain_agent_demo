@@ -34,7 +34,8 @@ OAI_PRICE1K = {
     "gpt-4-0125-preview": (0.01, 0.03),
     "gpt-4-turbo-preview": (0.01, 0.03),
     "gpt-4-1106-vision-preview": (0.01, 0.03),  # TODO: support vision pricing of images
-    "gpt-4o-mini": (0.000015, 0.00003),
+    # "gpt-4o-mini-2024-07-18": (0.000015, 0.00006),
+    "gpt-4o-mini-2024-07-18": (0.01, 0.03),
     "meta-llama/Meta-Llama-3-70B-Instruct": (0.00052, 0.00075),
 }
 
@@ -72,13 +73,16 @@ def get_cost(row):
 
 
 if __name__ == "__main__":
-    directory = '/linxindisk/linxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Physics/Results/sci_phy_MetaAgent_llama3_70'
+    directory = 'linxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/ML/ML_bench/Results/ml_bench_TwoAgents_4omini'
     file_name = 'logs.db'
     files = find_files(directory, file_name)
     cost_sum = 0
     for file in files:
         print(file)
         log_data = get_log(file)
+        if log_data == []:
+            print("failed, next")
+            continue
         log_data_df = pd.DataFrame(log_data)
 
         log_data_df["total_tokens"] = log_data_df.apply(
@@ -89,7 +93,6 @@ if __name__ == "__main__":
         log_data_df["response"] = log_data_df.apply(
             lambda row: str_to_dict(row["response"])["choices"][0]["message"]["content"], axis=1
         )
-        
 
         cost_sum += round(log_data_df["total_cost"].sum(), 4)
     print("total cost: ", cost_sum)

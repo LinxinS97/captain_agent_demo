@@ -38,10 +38,9 @@ with open("expected_answer.txt", "rt") as fh:
 ####################
 # Task parameters
 general_llm_config = {
-    "temperature": 1,
-    "top_p": 0.95,
     "max_tokens": 1500,
-    "config_list": autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]}),
+    "stream": False,
+    "config_list": autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet", "llama3"]}),
 }
 nested_mode_config = {
     "autobuild_init_config": {
@@ -51,8 +50,6 @@ nested_mode_config = {
     },
     "autobuild_build_config": {
         "default_llm_config": {
-            "temperature": 1,
-            "top_p": 0.95,
             "max_tokens": 1500,
             "cache_seed": None,
         },

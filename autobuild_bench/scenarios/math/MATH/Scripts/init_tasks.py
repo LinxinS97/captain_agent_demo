@@ -224,12 +224,33 @@ SELECTED_PROBLEMS = [
     'MATH/test/counting_and_probability/482.json'
 ]
 
+SELECTED_PROBLEMS_REDUCED = [
+    "MATH/test/algebra/2144.json",
+    "MATH/test/algebra/1997.json",
+    "MATH/test/algebra/2072.json",
+    "MATH/test/algebra/2137.json",
+    "MATH/test/algebra/2557.json",
+    "MATH/test/algebra/2045.json",
+    "MATH/test/algebra/2499.json",
+    "MATH/test/counting_and_probability/483.json",
+    "MATH/test/intermediate_algebra/590.json",
+    "MATH/test/prealgebra/1511.json",
+    "MATH/test/intermediate_algebra/935.json",
+    "MATH/test/prealgebra/808.json",
+    "MATH/test/number_theory/233.json",
+    "MATH/test/number_theory/960.json",
+    "MATH/test/precalculus/551.json",
+    "MATH/test/counting_and_probability/909.json",
+    "MATH/test/algebra/2417.json",
+]
+
 
 def download_math():
     """Download the MATH dataset (if not already downloaded).
     Return a JSON dictionary of selected problems."""
 
     selected_problems = dict()
+    reduced_selected_problems = dict()
 
     if not os.path.isdir(DOWNLOADS_DIR):
         os.mkdir(DOWNLOADS_DIR)
@@ -254,8 +275,11 @@ def download_math():
             # print(f"Extracting: {member.name}")
             content = tar.extractfile(member).read()
             selected_problems[member.name] = json.loads(content)
+        if member.name in SELECTED_PROBLEMS_REDUCED:
+            content = tar.extractfile(member).read()
+            reduced_selected_problems[member.name] = json.loads(content)
 
-    return selected_problems
+    return selected_problems, reduced_selected_problems
 
 
 def create_jsonl(name, problems, template, agent_list = None, config_list = "OAI_CONFIG_LIST", config_list2="OAI_CONFIG_LIST"):
@@ -270,7 +294,7 @@ def create_jsonl(name, problems, template, agent_list = None, config_list = "OAI
         config_list_name = ""
     else:
         config_list_name = config_list
-    with open(os.path.join(TASKS_DIR, f"{name}.jsonl"), "wt") as fh:
+    with open(os.path.join(TASKS_DIR, f"{name}{config_list.replace('OAI_CONFIG_LIST', '')}.jsonl"), "wt") as fh:
         for item in problems.items():
             data = item[1]
 
@@ -299,7 +323,7 @@ def create_jsonl(name, problems, template, agent_list = None, config_list = "OAI
 
 ###############################################################################
 def main(args):
-    problems = download_math()
+    problems, reduced_problems = download_math()
     building_task = """We need a group of math experts to solve some math problems. 
 Those problems are in the fields of algebra, counting and probability, geometry, intermediate algebra, number theory, pre-algebra, and pre-calculus.
 They need to solve the problem collaboratively and check each other's answer. Also, they can write python code themselves to help solving the task if needed.
@@ -328,6 +352,9 @@ They need to solve the problem collaboratively and check each other's answer. Al
 
     for t in templates.items():
         create_jsonl(f"math_{t[0]}", problems, t[1], agent_list=agent_configs, config_list=args.config_list, config_list2=args.config_list2)
+    
+    for t in templates.items():
+        create_jsonl(f"r_math_{t[0]}", reduced_problems, t[1], agent_list=agent_configs, config_list=args.config_list, config_list2=args.config_list2)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -6,6 +6,7 @@ import json
 import os
 import re
 import requests
+import argparse
 from bs4 import BeautifulSoup
 from autogen.agentchat.contrib.agent_builder import AgentBuilder
 
@@ -15,6 +16,8 @@ SCRIPT_NAME = os.path.basename(SCRIPT_PATH)
 SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
 
 SCENARIO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.path.pardir))
+BENCH_DIR = os.path.realpath(os.path.join(os.path.join(SCENARIO_DIR, os.path.pardir), os.path.pardir))
+AG_PATH = os.path.realpath(os.path.join(os.path.join(BENCH_DIR, os.path.pardir), os.path.pardir))
 TEMPLATES_DIR = os.path.join(SCENARIO_DIR, "Templates")
 TASKS_DIR = os.path.join(SCENARIO_DIR, "Tasks")
 DOWNLOADS_DIR = os.path.join(SCENARIO_DIR, "Downloads")
@@ -36,10 +39,12 @@ SELECTED_PROBLEMS = [
     "video_45",
     "video_46",
     "video_47",
+    "video_48",
     "time_series_60",
     "time_series_61",
     "time_series_62",
-    "time_series_63"
+    "time_series_63",
+    "time_series_64"
 ]
 
 def get_readme(url):
@@ -52,7 +57,7 @@ def get_readme(url):
         return False
 
 
-def create_jsonl(name, dataset, template, agent_list=None, readme_cache=None):
+def create_jsonl(name, dataset, template, agent_list=None, readme_cache=None, config_list = "OAI_CONFIG_LIST", config_list2="OAI_CONFIG_LIST"):
     """Creates a JSONL scenario file with a given name, dictionary of MATH problems, and template path."""
 
     # Create a task directory if it doesn't exist
@@ -60,7 +65,9 @@ def create_jsonl(name, dataset, template, agent_list=None, readme_cache=None):
         os.mkdir(TASKS_DIR)
 
     # Create the jsonl file
-    with open(os.path.join(TASKS_DIR, name + ".jsonl"), "wt") as fh:
+    file_path = os.path.join(TASKS_DIR, f"{name}{config_list.replace('OAI_CONFIG_LIST', '')}.jsonl")
+    print(f"Current Path: {file_path}")
+    with open(file_path, "wt") as fh:
         for item in dataset:
             data = json.loads(item)
 
@@ -84,7 +91,14 @@ def create_jsonl(name, dataset, template, agent_list=None, readme_cache=None):
                     "readme.txt": {"__README__": data["oracle_segmet"]},
                     "expected_answer.txt": {"__ANSWER__": json.dumps(data["arguments"])},
                     "agent_list.txt": {"__AGENT_LIST__": json.dumps(agent_list)},
-                    "scenario.py": {"__AGENT_SAVE_PATH__": SAVE_DIR}
+                    "scenario.py": {
+                        "__AGENT_SAVE_PATH__": SAVE_DIR,
+                        "__LIBRARY_PATH__": f"{BENCH_DIR}/agent_library.json",
+                        "__TOOL_CORPUS__": f"{AG_PATH}/tools/tool_description.tsv",
+                        "__TOOL_ROOT__": f"{AG_PATH}/tools",
+                        "__CONFIG_LIST_PATH__": config_list,
+                        "__CONFIG_LIST_PATH2__": config_list2
+                    }
                 },
             }
 
@@ -92,7 +106,7 @@ def create_jsonl(name, dataset, template, agent_list=None, readme_cache=None):
 
 
 ###############################################################################
-def main():
+def main(args):
     with open(f"{DOWNLOADS_DIR}/ML_Bench_quarter.jsonl") as f:
         dataset = f.readlines()
 
@@ -116,11 +130,11 @@ Their goal is to write a python bash script to fulfill user's need, taking care 
     }
 
     ## build agents
-    builder = AgentBuilder(config_file_or_env='OAI_CONFIG_LIST',
-                           builder_model='gpt-4-1106',
-                           agent_model='gpt-4-1106',
-                           max_agents=10)
-    _, agent_configs = builder.build(building_task, default_llm_config, coding=False)
+    builder = AgentBuilder(config_file_or_env=args.config_list,
+                        builder_model_tags=['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet', 'gemini-1.5', 'llama3', '8b', '70b', 'mixtral', '8x22b', '8x7b'],
+                        agent_model_tags=['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet', 'gemini-1.5', 'llama3', '8b', '70b', 'mixtral', '8x22b', '8x7b'],
+                        max_agents=10)
+    _, agent_configs = builder.build(building_task, default_llm_config, coding=True)
     builder.save(f"{SAVE_DIR}/autobuild.json")
 
     readme_cache = {}
@@ -129,8 +143,15 @@ Their goal is to write a python bash script to fulfill user's need, taking care 
                      dataset,
                      t[1],
                      agent_list=agent_configs,
-                     readme_cache=readme_cache)
+                     readme_cache=readme_cache,
+                     config_list=args.config_list,
+                     config_list2=args.config_list2)
 
 
-if __name__ == "__main__" and __package__ is None:
-    main()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config-list', type=str, default="OAI_CONFIG_LIST_4omini")
+    parser.add_argument('--config-list2', type=str, default="OAI_CONFIG_LIST_4omini")
+    args = parser.parse_args()
+    main(args)
+

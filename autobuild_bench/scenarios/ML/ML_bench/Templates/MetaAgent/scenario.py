@@ -19,38 +19,52 @@ with open("expected_answer.txt", "rt") as fh:
     ANSWER = fh.read()
     ANSWER = json.loads(ANSWER)
 
-
+config1 = '__CONFIG_LIST_PATH__'
+config2 = '__CONFIG_LIST_PATH2__'
 ####################
-# Task parameters
+## Task parameters
 general_llm_config = {
-    "temperature": 1,
-    "top_p": 0.95,
-    "max_tokens": 1500,
-    "config_list": autogen.config_list_from_json("OAI_CONFIG_LIST", filter_dict={"model": ["gpt-4-1106"]}),
+    "temperature": 0,
+    "config_list": autogen.config_list_from_json(
+        config2, 
+        filter_dict={
+            "tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet", "llama3"]
+        }
+    ),
 }
 nested_mode_config = {
     "autobuild_init_config": {
-        "config_file_or_env": "OAI_CONFIG_LIST",
-        "builder_model": "gpt-4-1106",
-        "agent_model": "gpt-4-1106",
+        "config_file_or_env": config1,
+        "builder_model_tags": ['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet', 'gemini-1.5', 'llama3', '8b', '70b', 'mixtral', '8x22b', '8x7b'],
+        "agent_model_tags": ['gpt-4', '1106', '0125', 'claude3', 'haiku', 'sonnet', 'gemini-1.5', 'llama3', '8b', '70b', 'mixtral', '8x22b', '8x7b'],
     },
     "autobuild_build_config": {
         "default_llm_config": {
             "temperature": 1,
             "top_p": 0.95,
             "max_tokens": 1500,
+            "cache_seed": None,
         },
-        "coding": False
+        "coding": True,
+        "library_path_or_json": "__LIBRARY_PATH__",
+    },
+    "autobuild_tool_config": {
+        "tool_corpus": "__TOOL_CORPUS__",
+        "tool_root": "__TOOL_ROOT__",
+        "retriever": "all-mpnet-base-v2",
     },
     "group_chat_config": {"max_round": 15},
     "group_chat_llm_config": general_llm_config.copy(),
 }
+
 ## build agents
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
+
 meta_agent = MetaAgent(name="meta_agent", llm_config=general_llm_config.copy(), nested_mode="autobuild")
 meta_user_proxy = MetaUserProxyAgent(
     name="meta_user_proxy",
     nested_mode_config=nested_mode_config,
-    code_execution_config=False,
+    code_execution_config={},
     agent_config_save_path="__AGENT_SAVE_PATH__"
 )
 
@@ -140,7 +154,7 @@ checker_proxy = autogen.UserProxyAgent(
 answer = f"{' '.join([f'--{key} {value}' for key, value in ANSWER.items()])}"
 message_to_check = "[Problem]: " + PROBLEM + f"\n[Reply]: {response_with_ans}\n\n[Ground truth arguments]: " + answer
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
-
+autogen.runtime_logging.stop()
 
 ####################
 testbed_utils.finalize(agents=[meta_agent, meta_user_proxy, answer_checker, checker_proxy])

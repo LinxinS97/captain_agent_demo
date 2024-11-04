@@ -5,7 +5,14 @@ from autogenbench.tabulate_cmd import default_tabulate
 
 
 def scorer(instance_dir):
+    reduced_problems = os.listdir("/linxindisk/linxin/llm/autogen-autobuild-dev/autobuild_bench/scenarios/sci/Chemistry/Results/sci_chem_AutoBuild")
     print(instance_dir)
+    c = False
+    for problem in reduced_problems:
+        if str(problem) == instance_dir.split("/")[-2]:
+            c = True
+    if not c:
+        return None
     checker_messages = os.path.join(instance_dir, "checker_messages.json")
     if os.path.isfile(checker_messages):
         with open(checker_messages, "rt") as fh:

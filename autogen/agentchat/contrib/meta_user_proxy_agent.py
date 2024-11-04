@@ -19,7 +19,6 @@ def check_nested_mode_config(nested_mode_config: Dict):
             "group_chat_llm_config" in nested_mode_config.keys()
         ), "group_chat_llm_config is required when using autobuild as nested mode."
     elif "meta_prompting_llm_config" in nested_mode_config.keys():
-        # TODO: check meta_prompting_config
         pass
     else:
         raise ValueError("nested_mode_config should contain either autobuild_init_config or meta_prompting_llm_config.")
@@ -30,7 +29,7 @@ class MetaUserProxyAgent(ConversableAgent):
 
     CONVERSATION_REVIEW_PROMPT = """# Your task
 Briefly summarize the conversation history derived from an experts' group chat by following the answer format.
-If you found non-trivial contradictions or issues in the conversation, point it out with a detailed reason and mark the "Need double-check" as "Yes."
+If you found serious contradictions or issues in the conversation, point it out with a detailed reason and mark the "Need double-check" as "Yes."
 
 # Conversation history:
 {chat_history}

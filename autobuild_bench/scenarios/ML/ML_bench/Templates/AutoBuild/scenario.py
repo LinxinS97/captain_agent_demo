@@ -26,7 +26,8 @@ with open("agent_list.txt", "rt") as fh:
 ####################
 # Task parameters
 max_agents = 10
-config = 'OAI_CONFIG_LIST'
+config1 = '__CONFIG_LIST_PATH__'
+config2 = '__CONFIG_LIST_PATH2__'
 default_llm_config = {
     "temperature": 1,
     "top_p": 0.95,
@@ -34,17 +35,21 @@ default_llm_config = {
 }
 
 ## build agents
-config_list = autogen.config_list_from_json(config, filter_dict={"model": ["gpt-4-1106"]})
-builder = AgentBuilder(config_file_or_env=config,
-                       builder_model='gpt-4-1106',
-                       agent_model='gpt-4-1106',
+logging_session_id = autogen.runtime_logging.start(config={"dbname": "logs.db"})
+config_list = autogen.config_list_from_json(config1, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]})
+builder = AgentBuilder(config_file_or_env=config1,
+                       builder_model_tags=["gpt-4", "0125", "1106", "claude3", "haiku"],
+                       agent_model_tags=["gpt-4", "0125", "1106", "claude3", "haiku"],
                        max_agents=max_agents)
-agent_list, _ = builder.load(config_json=AGENT_CONFIGS, code_execution_config=False)
+agent_list, agent_configs = builder.load(config_json=AGENT_CONFIGS)
 
 ## Run task
-group_chat = autogen.GroupChat(agents=agent_list, messages=[], max_round=20)
+group_chat = autogen.GroupChat(agents=agent_list, messages=[], max_round=20, allow_repeat_speaker=agent_list[:-1] if agent_configs['coding'] is True else agent_list)
 manager = autogen.GroupChatManager(
-    groupchat=group_chat, code_execution_config={'use_docker': False}, llm_config={"config_list": config_list, **default_llm_config}
+    groupchat=group_chat, code_execution_config={'use_docker': False}, llm_config={
+        "config_list": autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}), 
+        **default_llm_config
+    }
 )
 question = """Please solve the following machine learning development problem given by a user: 
 {problem}
@@ -121,7 +126,7 @@ checker_proxy = autogen.UserProxyAgent(
 answer = f"{' '.join([f'--{key} {value}' for key, value in ANSWER.items()])}"
 message_to_check = "[Problem]: " + PROBLEM + f"\n[Reply]: {response_with_ans}\n\n[Ground truth arguments]: " + answer
 checker_proxy.initiate_chat(answer_checker, message=message_to_check)
-
+autogen.runtime_logging.stop()
 
 ####################
 testbed_utils.finalize(agents=[answer_checker, checker_proxy, manager])

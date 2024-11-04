@@ -26,7 +26,7 @@ config2 = '__CONFIG_LIST_PATH2__'
 # Task parameters
 general_llm_config = {
     "temperature": 0,
-    "config_list": autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku"]}),
+    "config_list": autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "llama3"]}),
 }
 nested_mode_config = {
     "autobuild_init_config": {
@@ -60,7 +60,7 @@ nested_mode_config = {
         "temperature": 1,
         "top_p": 0.95,
         "max_tokens": 1500,
-        "config_list": autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]}),
+        "config_list": autogen.config_list_from_json(config2, filter_dict={"tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet", "llama3"]}),
     },
 }
 

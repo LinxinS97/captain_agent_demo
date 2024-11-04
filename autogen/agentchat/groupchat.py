@@ -232,13 +232,16 @@ class GroupChat:
         """Return the system message for selecting the next speaker. This is always the *first* message in the context."""
         if agents is None:
             agents = self.agents
-        return f"""You are in a role play game. The following roles are in the group chat:
+        return f"""# Your task
+You are in a role play game and the following roles are in the group chat:
 {self._participant_roles(agents)}.
 
-Select the next role from {[agent.name for agent in agents]} to play according to the conversation history.
-You should response to the role's @mention if exist, help selecting the corresponding role.
-You **MUST** return only the name of the role.
-Do NOT select Computer_terminal if there are not codes in the last message."""
+Select the a role from {[agent.name for agent in agents]} to for next chat according to the conversation history.
+You should response to the role's @mention if applicable.
+You **MUST** return only the name of the role and your answer **MUST** include a role's name.
+Do NOT select Computer_terminal if there are not codes in the last message.
+
+# Your Answer"""
 
     def select_speaker_prompt(self, agents: Optional[List[Agent]] = None) -> str:
         """Return the floating system prompt selecting the next speaker. This is always the *last* message in the context."""
@@ -418,7 +421,7 @@ Do NOT select Computer_terminal if there are not codes in the last message."""
             if select_speaker_messages[-1].get("tool_calls", False):
                 select_speaker_messages[-1] = dict(select_speaker_messages[-1], tool_calls=None)
             select_speaker_messages = select_speaker_messages + [
-                {"role": "system", "content": self.select_speaker_prompt(graph_eligible_agents)}
+                {"role": "user", "content": self.select_speaker_prompt(graph_eligible_agents)}
             ]
         return selected_agent, graph_eligible_agents, select_speaker_messages
 

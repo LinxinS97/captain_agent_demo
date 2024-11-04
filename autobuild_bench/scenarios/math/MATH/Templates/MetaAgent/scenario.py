@@ -23,7 +23,7 @@ general_llm_config = {
     "config_list": autogen.config_list_from_json(
         config2, 
         filter_dict={
-            "tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet"]
+            "tags": ["gpt-4", "0125", "1106", "claude3", "haiku", "sonnet", "llama3"]
         }
     ),
 }
